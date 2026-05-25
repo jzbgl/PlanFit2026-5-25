@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, type DragEvent } from 'react';
 import { useApp } from '../context/AppContext';
 import { getPlansByUser, getPlanDays, getExercisesByDay, getLogsForDate, upsertWorkoutLog, createExercise, deleteExercise, updateExercise } from '../db/database';
 import type { PlanDay, Exercise, MuscleGroup } from '../types';
@@ -37,6 +37,8 @@ export default function TodayPlan() {
   const [newSets, setNewSets] = useState(3);
   const [newReps, setNewReps] = useState(12);
   const [newRest, setNewRest] = useState(60);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dropTarget, setDropTarget] = useState<number | null>(null);
 
   const todayStr = getTodayStr();
   const dayOfWeek = getTodayDayOfWeek();
@@ -128,22 +130,35 @@ export default function TodayPlan() {
     loadDay();
   }
 
-  async function handleMoveUp(index: number) {
-    if (index === 0) return;
-    const a = exercises[index - 1];
-    const b = exercises[index];
-    await updateExercise(a.id!, { order: b.order });
-    await updateExercise(b.id!, { order: a.order });
-    loadDay();
+  function handleDragStart(index: number) {
+    setDragIndex(index);
   }
 
-  async function handleMoveDown(index: number) {
-    if (index === exercises.length - 1) return;
-    const a = exercises[index];
-    const b = exercises[index + 1];
-    await updateExercise(a.id!, { order: b.order });
-    await updateExercise(b.id!, { order: a.order });
-    loadDay();
+  function handleDragOver(e: DragEvent, index: number) {
+    e.preventDefault();
+    setDropTarget(index);
+  }
+
+  async function handleDrop(index: number) {
+    if (dragIndex === null || dragIndex === index) return;
+
+    const newList = [...exercises];
+    const [moved] = newList.splice(dragIndex, 1);
+    newList.splice(index, 0, moved);
+    setExercises(newList);
+
+    // Update order in DB for all affected items
+    const updates = newList.map((ex, i) =>
+      updateExercise(ex.id!, { order: i + 1 })
+    );
+    await Promise.all(updates);
+    setDragIndex(null);
+    setDropTarget(null);
+  }
+
+  function handleDragEnd() {
+    setDragIndex(null);
+    setDropTarget(null);
   }
 
   if (loading) {
@@ -207,10 +222,13 @@ export default function TodayPlan() {
               completed={ex.completed}
               onToggle={() => handleToggle(ex.id!, i)}
               onDelete={() => handleDelete(i)}
-              onMoveUp={() => handleMoveUp(i)}
-              onMoveDown={() => handleMoveDown(i)}
-              isFirst={i === 0}
-              isLast={i === exercises.length - 1}
+              index={i}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              onDragEnd={handleDragEnd}
+              isDragging={dragIndex === i}
+              isDropTarget={dropTarget === i}
             />
           ))}
         </div>
