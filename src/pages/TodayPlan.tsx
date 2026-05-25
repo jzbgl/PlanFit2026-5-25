@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
-import { getPlansByUser, getPlanDays, getExercisesByDay, getLogsForDate, upsertWorkoutLog, createExercise } from '../db/database';
+import { getPlansByUser, getPlanDays, getExercisesByDay, getLogsForDate, upsertWorkoutLog, createExercise, deleteExercise, updateExercise } from '../db/database';
 import type { PlanDay, Exercise, MuscleGroup } from '../types';
 import { MUSCLE_GROUPS } from '../types';
 import ExerciseCard from '../components/ExerciseCard';
@@ -121,6 +121,31 @@ export default function TodayPlan() {
     loadDay();
   }
 
+  async function handleDelete(index: number) {
+    const ex = exercises[index];
+    if (!ex.id) return;
+    await deleteExercise(ex.id);
+    loadDay();
+  }
+
+  async function handleMoveUp(index: number) {
+    if (index === 0) return;
+    const a = exercises[index - 1];
+    const b = exercises[index];
+    await updateExercise(a.id!, { order: b.order });
+    await updateExercise(b.id!, { order: a.order });
+    loadDay();
+  }
+
+  async function handleMoveDown(index: number) {
+    if (index === exercises.length - 1) return;
+    const a = exercises[index];
+    const b = exercises[index + 1];
+    await updateExercise(a.id!, { order: b.order });
+    await updateExercise(b.id!, { order: a.order });
+    loadDay();
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -181,6 +206,11 @@ export default function TodayPlan() {
               exercise={ex}
               completed={ex.completed}
               onToggle={() => handleToggle(ex.id!, i)}
+              onDelete={() => handleDelete(i)}
+              onMoveUp={() => handleMoveUp(i)}
+              onMoveDown={() => handleMoveDown(i)}
+              isFirst={i === 0}
+              isLast={i === exercises.length - 1}
             />
           ))}
         </div>
