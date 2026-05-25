@@ -109,11 +109,11 @@ export default function PlanOverview() {
           {plans.length > 1 && (
             <button
               onClick={handleDeletePlan}
-              className="px-2 py-1.5 rounded-full text-xs font-semibold transition-opacity hover:opacity-80"
-              style={{ color: '#ef4444', border: '1px solid #ef4444' }}
+              className="px-2 py-1.5 rounded-full text-xs transition-opacity hover:opacity-80"
+              style={{ color: 'var(--color-text-muted)' }}
               title="删除当前计划"
             >
-              🗑
+              ×
             </button>
           )}
         </div>
