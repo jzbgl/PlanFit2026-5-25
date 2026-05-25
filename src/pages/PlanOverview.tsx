@@ -66,7 +66,7 @@ export default function PlanOverview() {
           {showCreate && (
             <CreatePlanModal
               onClose={() => setShowCreate(false)}
-              onCreated={async () => { setShowCreate(false); await loadPlan(); }}
+              onCreated={async (planId) => { setShowCreate(false); await loadPlan(planId); }}
             />
           )}
       </div>
@@ -87,25 +87,17 @@ export default function PlanOverview() {
           >
             + 新计划
           </button>
-          {plans.length > 1 && (
+          {plans.length >= 1 && (
             <select
               value={plan.id}
               onChange={(e) => switchPlan(Number(e.target.value))}
-              className="px-3 py-1.5 rounded-full text-sm font-semibold outline-none"
+              className="px-3 py-1.5 rounded-full text-sm font-semibold outline-none cursor-pointer"
               style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }}
             >
               {plans.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
+                <option key={p.id} value={p.id}>{p.name} · {p.weeks}周</option>
               ))}
             </select>
-          )}
-          {plans.length === 1 && (
-            <span
-              className="px-4 py-1.5 rounded-full text-sm font-semibold"
-              style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-text)' }}
-            >
-              {plan.name} · {plan.weeks}周
-            </span>
           )}
         </div>
       </div>

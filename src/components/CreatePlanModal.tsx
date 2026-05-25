@@ -6,7 +6,7 @@ import { MUSCLE_GROUPS } from '../types';
 
 interface Props {
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (planId: number) => void;
 }
 
 const DAY_LABELS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
@@ -92,7 +92,7 @@ export default function CreatePlanModal({ onClose, onCreated }: Props) {
       }
     }
 
-    onCreated();
+    onCreated(planId);
   }
 
   return (
