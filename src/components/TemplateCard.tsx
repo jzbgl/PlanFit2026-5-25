@@ -20,14 +20,16 @@ export function TemplateCards({ templates, todayMuscles, onSelect, onManage }: T
 
   const all = [...matching, ...others];
 
-  if (all.length === 0) return null;
-
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>📋 训练模板</h3>
         <button onClick={onManage} className="text-xs" style={{ color: 'var(--color-primary)' }}>管理</button>
       </div>
+
+      {all.length === 0 ? (
+        <p className="text-xs py-2" style={{ color: 'var(--color-text-muted)' }}>暂无模板，点击"管理"创建</p>
+      ) : (
       <div className="flex gap-2 overflow-x-auto pb-1">
         {all.map((tmpl) => {
           const isMatch = matching.includes(tmpl);
@@ -59,6 +61,7 @@ export function TemplateCards({ templates, todayMuscles, onSelect, onManage }: T
           );
         })}
       </div>
+      )}
     </div>
   );
 }
