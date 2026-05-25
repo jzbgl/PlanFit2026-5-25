@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { createPlan, createPlanDay, bulkCreateExercises } from '../db/database';
+import type { MuscleGroup } from '../types';
 import { MUSCLE_GROUPS } from '../types';
 
 interface Props {
@@ -12,7 +13,7 @@ const DAY_LABELS = ['周一', '周二', '周三', '周四', '周五', '周六', 
 
 interface DayConfig {
   isRest: boolean;
-  muscles: string[];
+  muscles: MuscleGroup[];
   exercises: { name: string; sets: number; reps: number; restSeconds: number }[];
 }
 
@@ -23,9 +24,9 @@ export default function CreatePlanModal({ onClose, onCreated }: Props) {
   const [currentWeek, setCurrentWeek] = useState(1);
   const [weeks, setWeeks] = useState<DayConfig[][]>(
     Array.from({ length: 4 }, () =>
-      Array.from({ length: 7 }, () => ({
+      Array.from({ length: 7 }, (): DayConfig => ({
         isRest: false,
-        muscles: [] as string[],
+        muscles: [],
         exercises: [],
       }))
     )
@@ -38,7 +39,7 @@ export default function CreatePlanModal({ onClose, onCreated }: Props) {
     setWeeks(newWeeks);
   }
 
-  function toggleMuscle(week: number, dayIdx: number, muscle: string) {
+  function toggleMuscle(week: number, dayIdx: number, muscle: MuscleGroup) {
     const newWeeks = weeks.map((w, wi) =>
       wi === week
         ? w.map((d, di) => {
@@ -72,7 +73,7 @@ export default function CreatePlanModal({ onClose, onCreated }: Props) {
           week: w + 1,
           dayOfWeek: d + 1,
           isRestDay: dayCfg.isRest,
-          muscleGroups: dayCfg.muscles as any,
+          muscleGroups: dayCfg.muscles,
         });
 
         if (!dayCfg.isRest && dayCfg.exercises.length > 0) {
@@ -85,7 +86,7 @@ export default function CreatePlanModal({ onClose, onCreated }: Props) {
               reps: ex.reps,
               restSeconds: ex.restSeconds,
               order: idx + 1,
-            })) as any
+            }))
           );
         }
       }

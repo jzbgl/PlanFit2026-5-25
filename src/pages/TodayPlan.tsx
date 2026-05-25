@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
-import { getPlansByUser, getPlanDays, getExercisesByDay, getLogsForDate, upsertWorkoutLog } from '../db/database';
-import type { PlanDay, Exercise } from '../types';
+import { getPlansByUser, getPlanDays, getExercisesByDay, getLogsForDate, upsertWorkoutLog, createExercise } from '../db/database';
+import type { PlanDay, Exercise, MuscleGroup } from '../types';
+import { MUSCLE_GROUPS } from '../types';
 import ExerciseCard from '../components/ExerciseCard';
 import Celebration from '../components/Celebration';
 
@@ -30,6 +31,12 @@ export default function TodayPlan() {
   const [planDay, setPlanDay] = useState<PlanDay | null>(null);
   const [allCompleted, setAllCompleted] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newMuscle, setNewMuscle] = useState<MuscleGroup>('胸');
+  const [newSets, setNewSets] = useState(3);
+  const [newReps, setNewReps] = useState(12);
+  const [newRest, setNewRest] = useState(60);
 
   const todayStr = getTodayStr();
   const dayOfWeek = getTodayDayOfWeek();
@@ -94,6 +101,26 @@ export default function TodayPlan() {
     setShowCelebration(false);
   }
 
+  async function handleAddExercise() {
+    if (!newName.trim() || !planDay) return;
+    await createExercise({
+      planDayId: planDay.id!,
+      name: newName.trim(),
+      muscleGroup: newMuscle,
+      sets: newSets,
+      reps: newReps,
+      restSeconds: newRest,
+      order: exercises.length + 1,
+    });
+    setNewName('');
+    setNewMuscle('胸');
+    setNewSets(3);
+    setNewReps(12);
+    setNewRest(60);
+    setShowAddForm(false);
+    loadDay();
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -156,6 +183,100 @@ export default function TodayPlan() {
               onToggle={() => handleToggle(ex.id!, i)}
             />
           ))}
+        </div>
+      )}
+
+      {planDay && !planDay.isRestDay && (
+        <div className="mt-4">
+          {!showAddForm ? (
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="w-full py-2.5 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90"
+              style={{ border: '1px dashed var(--color-primary)', color: 'var(--color-primary)' }}
+            >
+              + 添加动作
+            </button>
+          ) : (
+            <div
+              className="rounded-xl p-4 flex flex-col gap-3"
+              style={{ backgroundColor: 'var(--color-card)' }}
+            >
+              <div>
+                <label className="text-xs mb-1 block" style={{ color: 'var(--color-text-muted)' }}>动作名称</label>
+                <input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg text-sm border outline-none"
+                  style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                  placeholder="例如：杠铃卧推"
+                />
+              </div>
+              <div>
+                <label className="text-xs mb-1 block" style={{ color: 'var(--color-text-muted)' }}>肌群</label>
+                <select
+                  value={newMuscle}
+                  onChange={(e) => setNewMuscle(e.target.value as MuscleGroup)}
+                  className="w-full px-3 py-2 rounded-lg text-sm border outline-none"
+                  style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                >
+                  {MUSCLE_GROUPS.map((mg) => (
+                    <option key={mg} value={mg}>{mg}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs mb-1 block" style={{ color: 'var(--color-text-muted)' }}>组数</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={newSets}
+                    onChange={(e) => setNewSets(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-lg text-sm border outline-none"
+                    style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs mb-1 block" style={{ color: 'var(--color-text-muted)' }}>次数</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={newReps}
+                    onChange={(e) => setNewReps(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-lg text-sm border outline-none"
+                    style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs mb-1 block" style={{ color: 'var(--color-text-muted)' }}>休息(秒)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={newRest}
+                    onChange={(e) => setNewRest(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-lg text-sm border outline-none"
+                    style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowAddForm(false)}
+                  className="flex-1 py-2 rounded-lg text-sm"
+                  style={{ border: '1px solid var(--color-border)', color: 'var(--color-text-muted)' }}
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleAddExercise}
+                  className="flex-1 py-2 rounded-lg text-sm font-semibold"
+                  style={{ backgroundColor: 'var(--color-primary)', color: '#000' }}
+                >
+                  保存
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
