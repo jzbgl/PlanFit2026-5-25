@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
-import { getPlansByUser, getPlanDays, getAllLogs } from '../db/database';
+import { getPlansByUser, getPlanDays, getAllLogs, deletePlan } from '../db/database';
 import type { Plan, PlanDay } from '../types';
 import CalendarGrid from '../components/CalendarGrid';
 import CreatePlanModal from '../components/CreatePlanModal';
@@ -52,6 +52,13 @@ export default function PlanOverview() {
     loadPlan(planId);
   }
 
+  async function handleDeletePlan() {
+    if (!plan || plans.length <= 1) return;
+    const target = plan;
+    await deletePlan(target.id!);
+    loadPlan();
+  }
+
   if (!plan) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
@@ -99,6 +106,16 @@ export default function PlanOverview() {
               ))}
             </select>
           )}
+          {plans.length > 1 && (
+            <button
+              onClick={handleDeletePlan}
+              className="px-2 py-1.5 rounded-full text-xs font-semibold transition-opacity hover:opacity-80"
+              style={{ color: '#ef4444', border: '1px solid #ef4444' }}
+              title="删除当前计划"
+            >
+              🗑
+            </button>
+          )}
         </div>
       </div>
 
@@ -124,7 +141,7 @@ export default function PlanOverview() {
       {showCreate && (
         <CreatePlanModal
           onClose={() => setShowCreate(false)}
-          onCreated={async () => { setShowCreate(false); await loadPlan(); }}
+          onCreated={async (planId) => { setShowCreate(false); await loadPlan(planId); }}
         />
       )}
     </div>
