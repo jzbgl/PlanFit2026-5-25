@@ -1,55 +1,30 @@
 import { useState } from 'react';
-import type { PlanDay, Exercise, MuscleGroup } from '../types';
+import type { PlanDay, MuscleGroup } from '../types';
 import { MUSCLE_GROUP_COLORS, MUSCLE_GROUPS } from '../types';
 
 interface DayEditorProps {
   day: PlanDay;
-  exercises: Exercise[];
   onClose: () => void;
-  onSave: (day: PlanDay, exercises: Exercise[]) => void;
+  onSave: (day: PlanDay) => void;
 }
 
-function DayEditor({ day, exercises, onClose, onSave }: DayEditorProps) {
+function DayEditor({ day, onClose, onSave }: DayEditorProps) {
   const [isRest, setIsRest] = useState(day.isRestDay);
   const [muscles, setMuscles] = useState<MuscleGroup[]>([...day.muscleGroups]);
-  const [exs, setExs] = useState<Exercise[]>(exercises.map((e) => ({ ...e })));
-  const [newName, setNewName] = useState('');
-  const [newMuscle, setNewMuscle] = useState<MuscleGroup>('胸');
-  const [newSets, setNewSets] = useState(3);
-  const [newReps, setNewReps] = useState(12);
-  const [newRest, setNewRest] = useState(60);
-
-  function addExercise() {
-    if (!newName.trim()) return;
-    setExs([...exs, {
-      planDayId: day.id!,
-      name: newName.trim(),
-      muscleGroup: newMuscle,
-      sets: newSets,
-      reps: newReps,
-      restSeconds: newRest,
-      order: exs.length + 1,
-    }]);
-    setNewName('');
-  }
-
-  function removeExercise(idx: number) {
-    setExs(exs.filter((_, i) => i !== idx));
-  }
 
   function toggleMuscle(mg: MuscleGroup) {
     setMuscles((prev) => (prev.includes(mg) ? prev.filter((m) => m !== mg) : [...prev, mg]));
   }
 
   function handleSave() {
-    onSave({ ...day, isRestDay: isRest, muscleGroups: isRest ? [] : muscles }, isRest ? [] : exs);
+    onSave({ ...day, isRestDay: isRest, muscleGroups: isRest ? [] : muscles });
   }
 
   const dayNames = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(10,22,40,0.95)' }}>
-      <div className="w-full max-w-md mx-4 rounded-2xl p-6 max-h-[85vh] overflow-y-auto" style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
+      <div className="w-full max-w-sm mx-4 rounded-2xl p-6" style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-bold" style={{ color: 'var(--color-text)' }}>
             第{day.week}周 {dayNames[day.dayOfWeek]}
@@ -57,7 +32,7 @@ function DayEditor({ day, exercises, onClose, onSave }: DayEditorProps) {
           <button onClick={onClose} className="text-xl" style={{ color: 'var(--color-text-muted)' }}>✕</button>
         </div>
 
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-5">
           <button onClick={() => setIsRest(!isRest)} className="px-4 py-2 rounded-lg text-sm font-semibold flex-1"
             style={{ backgroundColor: isRest ? 'var(--color-rest)' : 'var(--color-primary)', color: isRest ? '#fff' : '#000' }}>
             {isRest ? '休息日' : '训练日'}
@@ -67,10 +42,10 @@ function DayEditor({ day, exercises, onClose, onSave }: DayEditorProps) {
 
         {!isRest && (
           <>
-            <label className="text-xs mb-2 block" style={{ color: 'var(--color-text-muted)' }}>肌群</label>
-            <div className="flex flex-wrap gap-1.5 mb-4">
+            <label className="text-xs mb-2 block" style={{ color: 'var(--color-text-muted)' }}>今日训练肌群</label>
+            <div className="flex flex-wrap gap-2 mb-5">
               {MUSCLE_GROUPS.map((mg) => (
-                <button key={mg} onClick={() => toggleMuscle(mg)} className="px-2 py-0.5 rounded text-xs"
+                <button key={mg} onClick={() => toggleMuscle(mg)} className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
                   style={{
                     backgroundColor: muscles.includes(mg) ? MUSCLE_GROUP_COLORS[mg] : 'transparent',
                     color: muscles.includes(mg) ? '#000' : 'var(--color-text-muted)',
@@ -79,50 +54,6 @@ function DayEditor({ day, exercises, onClose, onSave }: DayEditorProps) {
                   {mg}
                 </button>
               ))}
-            </div>
-
-            <label className="text-xs mb-2 block" style={{ color: 'var(--color-text-muted)' }}>训练动作</label>
-            <div className="flex flex-col gap-2 mb-4">
-              {exs.map((ex, idx) => (
-                <div key={idx} className="flex items-center justify-between p-2 rounded-lg text-sm" style={{ backgroundColor: 'var(--color-card)' }}>
-                  <div className="flex-1 min-w-0">
-                    <span className="font-semibold" style={{ color: 'var(--color-text)' }}>{ex.name}</span>
-                    <span className="ml-2 text-xs" style={{ color: 'var(--color-text-muted)' }}>{ex.sets}×{ex.reps} · {ex.restSeconds}s</span>
-                  </div>
-                  <button onClick={() => removeExercise(idx)} className="ml-2 text-sm hover:opacity-70" style={{ color: 'var(--color-text-muted)' }}>×</button>
-                </div>
-              ))}
-            </div>
-
-            <div className="rounded-lg p-3 mb-4" style={{ backgroundColor: 'var(--color-card)' }}>
-              <div className="grid grid-cols-4 gap-2 mb-2">
-                <div className="col-span-2">
-                  <input value={newName} onChange={(e) => setNewName(e.target.value)}
-                    className="w-full px-2 py-1.5 rounded text-xs border outline-none"
-                    style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }} placeholder="动作名称" />
-                </div>
-                <div>
-                  <select value={newMuscle} onChange={(e) => setNewMuscle(e.target.value as MuscleGroup)}
-                    className="w-full px-1 py-1.5 rounded text-xs border outline-none"
-                    style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>
-                    {MUSCLE_GROUPS.map((mg) => (<option key={mg} value={mg}>{mg}</option>))}
-                  </select>
-                </div>
-                <div />
-              </div>
-              <div className="grid grid-cols-4 gap-2 mb-2">
-                <input type="number" min={1} value={newSets} onChange={(e) => setNewSets(Number(e.target.value))}
-                  className="w-full px-2 py-1.5 rounded text-xs border outline-none"
-                  style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }} placeholder="组数" />
-                <input type="number" min={1} value={newReps} onChange={(e) => setNewReps(Number(e.target.value))}
-                  className="w-full px-2 py-1.5 rounded text-xs border outline-none"
-                  style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }} placeholder="次数" />
-                <input type="number" min={0} value={newRest} onChange={(e) => setNewRest(Number(e.target.value))}
-                  className="w-full px-2 py-1.5 rounded text-xs border outline-none"
-                  style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }} placeholder="休息(秒)" />
-                <button onClick={addExercise} className="px-2 py-1.5 rounded text-xs font-semibold"
-                  style={{ backgroundColor: 'var(--color-primary)', color: '#000' }}>添加</button>
-              </div>
             </div>
           </>
         )}
