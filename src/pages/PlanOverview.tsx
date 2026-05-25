@@ -8,6 +8,7 @@ import CreatePlanModal from '../components/CreatePlanModal';
 export default function PlanOverview() {
   const { state } = useApp();
   const user = state.currentUser;
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [plan, setPlan] = useState<Plan | null>(null);
   const [week, setWeek] = useState(1);
   const [completedDayIds, setCompletedDayIds] = useState<Set<number>>(new Set());
@@ -16,11 +17,14 @@ export default function PlanOverview() {
 
   const weeks = plan?.weeks || 4;
 
-  const loadPlan = useCallback(async () => {
+  const loadPlan = useCallback(async (planId?: number) => {
     if (!user?.id) return;
-    const plans = await getPlansByUser(user.id!);
-    if (plans.length === 0) { setPlan(null); return; }
-    const p = plans[0];
+    const allPlans = await getPlansByUser(user.id!);
+    setPlans(allPlans);
+    if (allPlans.length === 0) { setPlan(null); setAllDays([]); return; }
+
+    const p = planId ? allPlans.find((pl) => pl.id === planId) : allPlans[0];
+    if (!p) { setPlan(null); setAllDays([]); return; }
     setPlan(p);
     const days = await getPlanDays(p.id!);
     setAllDays(days);
@@ -43,6 +47,10 @@ export default function PlanOverview() {
   }, [user?.id]);
 
   useEffect(() => { loadPlan(); }, [loadPlan]);
+
+  function switchPlan(planId: number) {
+    loadPlan(planId);
+  }
 
   if (!plan) {
     return (
@@ -79,12 +87,26 @@ export default function PlanOverview() {
           >
             + 新计划
           </button>
-          <span
-            className="px-4 py-1.5 rounded-full text-sm font-semibold"
-            style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-text)' }}
-          >
-            {plan.name} · {plan.weeks}周
-          </span>
+          {plans.length > 1 && (
+            <select
+              value={plan.id}
+              onChange={(e) => switchPlan(Number(e.target.value))}
+              className="px-3 py-1.5 rounded-full text-sm font-semibold outline-none"
+              style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }}
+            >
+              {plans.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          )}
+          {plans.length === 1 && (
+            <span
+              className="px-4 py-1.5 rounded-full text-sm font-semibold"
+              style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-text)' }}
+            >
+              {plan.name} · {plan.weeks}周
+            </span>
+          )}
         </div>
       </div>
 

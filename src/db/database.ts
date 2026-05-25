@@ -43,7 +43,8 @@ export async function getUserById(id: number): Promise<User | undefined> {
 // --- Plan helpers ---
 
 export async function getPlansByUser(userId: number): Promise<Plan[]> {
-  return db.plans.where('userId').equals(userId).toArray();
+  const plans = await db.plans.where('userId').equals(userId).toArray();
+  return plans.sort((a, b) => b.createdAt - a.createdAt);
 }
 
 export async function createPlan(plan: Omit<Plan, 'id'>): Promise<number> {
