@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { getPlansByUser, getPlanDays, getAllLogs } from '../db/database';
 import type { Plan, PlanDay } from '../types';
 import CalendarGrid from '../components/CalendarGrid';
+import CreatePlanModal from '../components/CreatePlanModal';
 
 export default function PlanOverview() {
   const { state } = useApp();
@@ -11,44 +12,55 @@ export default function PlanOverview() {
   const [week, setWeek] = useState(1);
   const [completedDayIds, setCompletedDayIds] = useState<Set<number>>(new Set());
   const [allDays, setAllDays] = useState<PlanDay[]>([]);
+  const [showCreate, setShowCreate] = useState(false);
 
   const weeks = plan?.weeks || 4;
 
-  useEffect(() => {
+  const loadPlan = useCallback(async () => {
     if (!user?.id) return;
-    (async () => {
-      const plans = await getPlansByUser(user.id!);
-      if (plans.length === 0) return;
-      const p = plans[0];
-      setPlan(p);
-      const days = await getPlanDays(p.id!);
-      setAllDays(days);
+    const plans = await getPlansByUser(user.id!);
+    if (plans.length === 0) { setPlan(null); return; }
+    const p = plans[0];
+    setPlan(p);
+    const days = await getPlanDays(p.id!);
+    setAllDays(days);
 
-      const logs = await getAllLogs(user.id!);
-      const completedSet = new Set<number>();
-      const completedMap = new Map<string, boolean>();
-      for (const log of logs) {
-        if (log.completed) {
-          const day = days.find((d) => d.id === log.planDayId);
-          if (day) completedMap.set(`${day.week}-${day.dayOfWeek}`, true);
-        }
+    const logs = await getAllLogs(user.id!);
+    const completedSet = new Set<number>();
+    const completedMap = new Map<string, boolean>();
+    for (const log of logs) {
+      if (log.completed) {
+        const day = days.find((d) => d.id === log.planDayId);
+        if (day) completedMap.set(`${day.week}-${day.dayOfWeek}`, true);
       }
-      for (const day of days) {
-        if (completedMap.get(`${day.week}-${day.dayOfWeek}`)) {
-          completedSet.add(day.id!);
-        }
+    }
+    for (const day of days) {
+      if (completedMap.get(`${day.week}-${day.dayOfWeek}`)) {
+        completedSet.add(day.id!);
       }
-      setCompletedDayIds(completedSet);
-    })();
+    }
+    setCompletedDayIds(completedSet);
   }, [user?.id]);
+
+  useEffect(() => { loadPlan(); }, [loadPlan]);
 
   if (!plan) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <p style={{ color: 'var(--color-text-muted)' }}>暂无训练计划</p>
-        <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-          创建新用户时会自动导入推拉腿4周模板
-        </p>
+        <button
+          onClick={() => setShowCreate(true)}
+          className="px-5 py-2 rounded-lg text-sm font-semibold"
+          style={{ backgroundColor: 'var(--color-primary)', color: '#000' }}
+        >
+          创建自定义计划
+        </button>
+        {showCreate && (
+          <CreatePlanModal
+            onClose={() => setShowCreate(false)}
+            onCreated={() => { setShowCreate(false); loadPlan(); }}
+          />
+        )}
       </div>
     );
   }
@@ -59,12 +71,21 @@ export default function PlanOverview() {
         <h1 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>
           计划概览
         </h1>
-        <span
-          className="px-4 py-1.5 rounded-full text-sm font-semibold"
-          style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-text)' }}
-        >
-          {plan.name} · {plan.weeks}周
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowCreate(true)}
+            className="px-3 py-1.5 rounded-full text-xs font-semibold transition-opacity hover:opacity-90"
+            style={{ border: '1px solid var(--color-primary)', color: 'var(--color-primary)' }}
+          >
+            + 新计划
+          </button>
+          <span
+            className="px-4 py-1.5 rounded-full text-sm font-semibold"
+            style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-text)' }}
+          >
+            {plan.name} · {plan.weeks}周
+          </span>
+        </div>
       </div>
 
       {/* Week tabs */}
@@ -85,6 +106,13 @@ export default function PlanOverview() {
       </div>
 
       <CalendarGrid days={allDays} week={week} completedDayIds={completedDayIds} />
+
+      {showCreate && (
+        <CreatePlanModal
+          onClose={() => setShowCreate(false)}
+          onCreated={() => { setShowCreate(false); loadPlan(); }}
+        />
+      )}
     </div>
   );
 }

@@ -10,9 +10,9 @@ class PlanFitDB extends Dexie {
 
   constructor() {
     super('PlanFitDB');
-    this.version(1).stores({
-      users: '++id, name',
-      plans: '++id, userId',
+    this.version(2).stores({
+      users: '++id, name, createdAt',
+      plans: '++id, userId, createdAt',
       planDays: '++id, planId, [planId+week+dayOfWeek]',
       exercises: '++id, planDayId',
       workoutLogs: '++id, userId, [userId+date], [userId+exerciseId+date]',
