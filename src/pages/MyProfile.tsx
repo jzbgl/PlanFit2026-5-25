@@ -1,3 +1,203 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useApp } from '../context/AppContext';
+import { updateUser } from '../db/database';
+import type { Goal } from '../types';
+import { GOAL_OPTIONS } from '../types';
+
+const AVATAR_OPTIONS = ['💪', '🏋️', '🏃', '🧘', '🤸', '🚴', '⚡', '🔥'];
+
 export default function MyProfile() {
-  return <div>MyProfile</div>;
+  const { state, dispatch } = useApp();
+  const user = state.currentUser;
+  const navigate = useNavigate();
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({
+    name: user?.name || '',
+    height: String(user?.height || ''),
+    weight: String(user?.weight || ''),
+    goal: (user?.goal || '增肌') as Goal,
+  });
+  const [avatar, setAvatar] = useState(user?.avatar || '💪');
+
+  if (!user) return null;
+
+  async function handleSave() {
+    const h = parseFloat(form.height);
+    const w = parseFloat(form.weight);
+    if (!form.name.trim() || isNaN(h) || isNaN(w)) return;
+
+    await updateUser(user.id!, {
+      name: form.name.trim(),
+      height: h,
+      weight: w,
+      goal: form.goal,
+      avatar,
+    });
+
+    dispatch({
+      type: 'SET_USER',
+      user: { ...user, name: form.name.trim(), height: h, weight: w, goal: form.goal, avatar },
+    });
+    setEditing(false);
+  }
+
+  function handleLogout() {
+    dispatch({ type: 'LOGOUT' });
+    navigate('/login');
+  }
+
+  return (
+    <div className="max-w-md mx-auto">
+      {!editing ? (
+        <>
+          {/* View mode header */}
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>
+              我的
+            </h1>
+            <button
+              onClick={() => setEditing(true)}
+              className="px-4 py-1.5 rounded-full text-sm transition-opacity hover:opacity-90"
+              style={{ border: '1px solid var(--color-primary)', color: 'var(--color-primary)' }}
+            >
+              编辑
+            </button>
+          </div>
+
+          {/* Avatar + name */}
+          <div className="flex flex-col items-center py-6 gap-2">
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center text-4xl"
+              style={{ background: 'linear-gradient(135deg, var(--color-primary), #00c853)' }}
+            >
+              {user.avatar || '💪'}
+            </div>
+            <div className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>
+              {user.name}
+            </div>
+            <div className="text-sm" style={{ color: 'var(--color-primary)' }}>
+              {user.goal} · {state.plans.length > 0 ? '进行中' : '未开始'}
+            </div>
+          </div>
+
+          {/* Info card */}
+          <div className="rounded-xl p-4 flex flex-col gap-3" style={{ backgroundColor: 'var(--color-card)' }}>
+            <div className="flex justify-between items-center">
+              <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>身高</span>
+              <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{user.height} cm</span>
+            </div>
+            <div className="border-t" style={{ borderColor: 'var(--color-border)' }} />
+            <div className="flex justify-between items-center">
+              <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>体重</span>
+              <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{user.weight} kg</span>
+            </div>
+            <div className="border-t" style={{ borderColor: 'var(--color-border)' }} />
+            <div className="flex justify-between items-center">
+              <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>健身目标</span>
+              <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{user.goal}</span>
+            </div>
+          </div>
+
+          {/* Switch user */}
+          <button
+            onClick={handleLogout}
+            className="w-full mt-4 p-4 rounded-xl flex items-center justify-between transition-colors hover:opacity-90"
+            style={{ backgroundColor: 'var(--color-card)' }}
+          >
+            <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>切换用户</span>
+            <span style={{ color: 'var(--color-primary)' }}>→</span>
+          </button>
+        </>
+      ) : (
+        <>
+          {/* Edit mode header */}
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>
+              编辑资料
+            </h1>
+            <button
+              onClick={handleSave}
+              className="px-4 py-1.5 rounded-full text-sm font-semibold transition-opacity hover:opacity-90"
+              style={{ backgroundColor: 'var(--color-primary)', color: '#000' }}
+            >
+              保存
+            </button>
+          </div>
+
+          {/* Avatar picker */}
+          <div className="flex flex-col items-center py-4 gap-2">
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center text-4xl"
+              style={{ background: 'linear-gradient(135deg, var(--color-primary), #00c853)' }}
+            >
+              {avatar}
+            </div>
+            <div className="flex gap-2 flex-wrap justify-center mt-2">
+              {AVATAR_OPTIONS.map((a) => (
+                <button
+                  key={a}
+                  onClick={() => setAvatar(a)}
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-lg transition-opacity hover:opacity-80"
+                  style={{
+                    backgroundColor: a === avatar ? 'var(--color-primary)' : 'var(--color-card)',
+                  }}
+                >
+                  {a}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Edit form */}
+          <div className="flex flex-col gap-4">
+            <div>
+              <label className="text-xs mb-1 block" style={{ color: 'var(--color-text-muted)' }}>姓名</label>
+              <input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className="w-full px-3 py-2.5 rounded-lg text-sm border outline-none"
+                style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs mb-1 block" style={{ color: 'var(--color-text-muted)' }}>身高 (cm)</label>
+                <input
+                  type="number"
+                  value={form.height}
+                  onChange={(e) => setForm({ ...form, height: e.target.value })}
+                  className="w-full px-3 py-2.5 rounded-lg text-sm border outline-none"
+                  style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                />
+              </div>
+              <div>
+                <label className="text-xs mb-1 block" style={{ color: 'var(--color-text-muted)' }}>体重 (kg)</label>
+                <input
+                  type="number"
+                  value={form.weight}
+                  onChange={(e) => setForm({ ...form, weight: e.target.value })}
+                  className="w-full px-3 py-2.5 rounded-lg text-sm border outline-none"
+                  style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs mb-1 block" style={{ color: 'var(--color-text-muted)' }}>健身目标</label>
+              <select
+                value={form.goal}
+                onChange={(e) => setForm({ ...form, goal: e.target.value as Goal })}
+                className="w-full px-3 py-2.5 rounded-lg text-sm border outline-none"
+                style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+              >
+                {GOAL_OPTIONS.map((g) => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
