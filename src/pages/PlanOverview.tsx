@@ -4,6 +4,7 @@ import { getPlansByUser, getPlanDays, getAllLogs, deletePlan, db } from '../db/d
 import type { Plan, PlanDay, Exercise } from '../types';
 import CalendarGrid, { DayEditor } from '../components/CalendarGrid';
 import CreatePlanModal from '../components/CreatePlanModal';
+import WeatherPanel from '../components/WeatherPanel';
 
 export default function PlanOverview() {
   const { state } = useApp();
@@ -189,6 +190,8 @@ export default function PlanOverview() {
         completedDayIds={completedDayIds}
         onEditDay={handleEditDay}
       />
+
+      <WeatherPanel />
 
       {editingDay && (
         <DayEditor
