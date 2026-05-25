@@ -21,7 +21,7 @@ export default function CreatePlanModal({ onClose, onCreated }: Props) {
   const { state } = useApp();
   const [planName, setPlanName] = useState('我的训练计划');
   const [step, setStep] = useState<'name' | 'days'>('name');
-  const [currentWeek, setCurrentWeek] = useState(1);
+  const [currentWeek, setCurrentWeek] = useState(0);
   const [weeks, setWeeks] = useState<DayConfig[][]>(
     Array.from({ length: 4 }, () =>
       Array.from({ length: 7 }, (): DayConfig => ({

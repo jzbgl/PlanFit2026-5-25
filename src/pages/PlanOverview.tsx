@@ -23,7 +23,7 @@ export default function PlanOverview() {
     setPlans(allPlans);
     if (allPlans.length === 0) { setPlan(null); setAllDays([]); return; }
 
-    const p = planId ? allPlans.find((pl) => pl.id === planId) : allPlans[0];
+    const p = planId ? allPlans.find((pl) => pl.id === planId) ?? allPlans[0] : allPlans[0];
     if (!p) { setPlan(null); setAllDays([]); return; }
     setPlan(p);
     const days = await getPlanDays(p.id!);
@@ -63,12 +63,12 @@ export default function PlanOverview() {
         >
           创建自定义计划
         </button>
-        {showCreate && (
-          <CreatePlanModal
-            onClose={() => setShowCreate(false)}
-            onCreated={() => { setShowCreate(false); loadPlan(); }}
-          />
-        )}
+          {showCreate && (
+            <CreatePlanModal
+              onClose={() => setShowCreate(false)}
+              onCreated={async () => { setShowCreate(false); await loadPlan(); }}
+            />
+          )}
       </div>
     );
   }
@@ -132,7 +132,7 @@ export default function PlanOverview() {
       {showCreate && (
         <CreatePlanModal
           onClose={() => setShowCreate(false)}
-          onCreated={() => { setShowCreate(false); loadPlan(); }}
+          onCreated={async () => { setShowCreate(false); await loadPlan(); }}
         />
       )}
     </div>
