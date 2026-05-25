@@ -236,18 +236,12 @@ export function TemplateManager({ onClose, onRefresh }: ManagerProps) {
                         style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }} placeholder="休息s" />
                       <div className="col-span-2 flex gap-1">
                         <button onClick={() => removeEx(idx)} className="text-xs px-1 py-1 rounded" style={{ color: '#ef4444' }}>×</button>
-                        {idx === exercises.length - 1 && (
-                          <button onClick={addExercise} className="text-xs px-1 py-1 rounded font-semibold"
-                            style={{ color: 'var(--color-primary)' }}>+</button>
-                        )}
                       </div>
                     </div>
                   ))}
-                  {exercises.length === 0 && (
-                    <button onClick={addExercise} className="text-xs py-2 rounded" style={{ color: 'var(--color-primary)', border: '1px dashed var(--color-primary)' }}>
-                      + 添加动作
-                    </button>
-                  )}
+                  <button onClick={addExercise} className="w-full py-2 rounded text-xs font-semibold mt-1" style={{ color: 'var(--color-primary)', border: '1px dashed var(--color-primary)' }}>
+                    + 添加动作
+                  </button>
                 </div>
               </div>
             </div>
