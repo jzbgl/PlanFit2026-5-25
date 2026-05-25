@@ -14,6 +14,7 @@ export default function PlanOverview() {
   const [completedDayIds, setCompletedDayIds] = useState<Set<number>>(new Set());
   const [allDays, setAllDays] = useState<PlanDay[]>([]);
   const [showCreate, setShowCreate] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const weeks = plan?.weeks || 4;
 
@@ -52,10 +53,10 @@ export default function PlanOverview() {
     loadPlan(planId);
   }
 
-  async function handleDeletePlan() {
-    if (!plan || plans.length <= 1) return;
-    const target = plan;
-    await deletePlan(target.id!);
+  async function handleDeletePlan(planId: number) {
+    if (plans.length <= 1) return;
+    await deletePlan(planId);
+    setDropdownOpen(false);
     loadPlan();
   }
 
@@ -95,26 +96,52 @@ export default function PlanOverview() {
             + 新计划
           </button>
           {plans.length >= 1 && (
-            <select
-              value={plan.id}
-              onChange={(e) => switchPlan(Number(e.target.value))}
-              className="px-3 py-1.5 rounded-full text-sm font-semibold outline-none cursor-pointer"
-              style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }}
-            >
-              {plans.map((p) => (
-                <option key={p.id} value={p.id}>{p.name} · {p.weeks}周</option>
-              ))}
-            </select>
-          )}
-          {plans.length > 1 && (
-            <button
-              onClick={handleDeletePlan}
-              className="px-2 py-1.5 rounded-full text-xs transition-opacity hover:opacity-80"
-              style={{ color: 'var(--color-text-muted)' }}
-              title="删除当前计划"
-            >
-              ×
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="px-3 py-1.5 rounded-full text-sm font-semibold outline-none flex items-center gap-1"
+                style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }}
+              >
+                {plan.name} · {plan.weeks}周
+                <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>▾</span>
+              </button>
+
+              {dropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />
+                  <div
+                    className="absolute right-0 top-full mt-1 rounded-xl py-1 min-w-[200px] z-20 shadow-lg"
+                    style={{ backgroundColor: 'var(--color-card)', border: '1px solid var(--color-border)' }}
+                  >
+                    {plans.map((p) => (
+                      <div
+                        key={p.id}
+                        className="flex items-center justify-between px-4 py-2 group hover:opacity-90"
+                        style={{ backgroundColor: p.id === plan.id ? 'var(--color-sidebar)' : 'transparent' }}
+                      >
+                        <button
+                          onClick={() => { switchPlan(p.id!); setDropdownOpen(false); }}
+                          className="text-sm text-left flex-1"
+                          style={{ color: 'var(--color-text)' }}
+                        >
+                          {p.name} · {p.weeks}周
+                        </button>
+                        {plans.length > 1 && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeletePlan(p.id!); }}
+                            className="ml-2 text-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                            style={{ color: 'var(--color-text-muted)' }}
+                            title="删除"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
       </div>
