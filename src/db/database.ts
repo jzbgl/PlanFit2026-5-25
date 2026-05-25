@@ -10,10 +10,10 @@ class PlanFitDB extends Dexie {
 
   constructor() {
     super('PlanFitDB');
-    this.version(2).stores({
+    this.version(3).stores({
       users: '++id, name, createdAt',
       plans: '++id, userId, createdAt',
-      planDays: '++id, planId, [planId+week+dayOfWeek]',
+      planDays: '++id, planId, date, [planId+week+dayOfWeek]',
       exercises: '++id, planDayId',
       workoutLogs: '++id, userId, [userId+date], [userId+exerciseId+date]',
     });
@@ -65,8 +65,12 @@ export async function getPlanDays(planId: number): Promise<PlanDay[]> {
   return db.planDays.where('planId').equals(planId).toArray();
 }
 
-export async function getPlanDay(planId: number, week: number, dayOfWeek: number): Promise<PlanDay | undefined> {
-  return db.planDays.where({ planId, week, dayOfWeek }).first();
+export async function getPlanDayByDate(planId: number, date: string): Promise<PlanDay | undefined> {
+  return db.planDays.where({ planId, date }).first();
+}
+
+export async function getPlanDaysByDateRange(planId: number, from: string, to: string): Promise<PlanDay[]> {
+  return db.planDays.where('planId').equals(planId).filter(d => d.date! >= from && d.date! <= to).toArray();
 }
 
 export async function createPlanDay(day: Omit<PlanDay, 'id'>): Promise<number> {

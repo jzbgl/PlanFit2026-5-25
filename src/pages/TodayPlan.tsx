@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, type DragEvent } from 'react';
 import { useApp } from '../context/AppContext';
-import { getPlansByUser, getPlanDays, getExercisesByDay, getLogsForDate, upsertWorkoutLog, createExercise, deleteExercise, updateExercise } from '../db/database';
+import { getPlansByUser, getPlanDayByDate, getExercisesByDay, getLogsForDate, upsertWorkoutLog, createExercise, deleteExercise, updateExercise } from '../db/database';
 import type { PlanDay, Exercise, MuscleGroup } from '../types';
 import { MUSCLE_GROUPS } from '../types';
 import ExerciseCard from '../components/ExerciseCard';
@@ -15,7 +15,7 @@ function getTodayDayOfWeek(): number {
 
 function getTodayStr(): string {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
 
 function getDateText(): string {
@@ -41,7 +41,6 @@ export default function TodayPlan() {
   const [dropTarget, setDropTarget] = useState<number | null>(null);
 
   const todayStr = getTodayStr();
-  const dayOfWeek = getTodayDayOfWeek();
 
   const loadDay = useCallback(async () => {
     if (!user?.id) return;
@@ -51,8 +50,7 @@ export default function TodayPlan() {
     const plan = plans[0];
     if (!plan) { setLoading(false); return; }
 
-    const days = await getPlanDays(plan.id!);
-    const today = days.find((d) => d.week === 1 && d.dayOfWeek === dayOfWeek);
+    const today = await getPlanDayByDate(plan.id!, todayStr);
 
     if (!today || today.isRestDay) {
       setPlanDay(today || null);
@@ -71,7 +69,7 @@ export default function TodayPlan() {
     setExercises(withStatus);
 
     setLoading(false);
-  }, [user?.id, todayStr, dayOfWeek]);
+  }, [user?.id, todayStr]);
 
   useEffect(() => {
     loadDay();

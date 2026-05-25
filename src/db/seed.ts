@@ -1,6 +1,18 @@
 import { createPlan, createPlanDay, bulkCreateExercises } from './database';
 import template from '../data/templates/push-pull-legs.json';
 
+function getDateForWeekDay(week: number, dayOfWeek: number): string {
+  const now = new Date();
+  const todayDow = now.getDay();
+  // Find Monday of current week
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (todayDow === 0 ? 6 : todayDow - 1));
+  // Calculate target date
+  const target = new Date(monday);
+  target.setDate(monday.getDate() + (week - 1) * 7 + (dayOfWeek - 1));
+  return `${target.getFullYear()}-${target.getMonth()}-${target.getDate()}`;
+}
+
 export async function seedPlanForUser(userId: number): Promise<void> {
   const planId = await createPlan({
     userId,
@@ -18,6 +30,7 @@ export async function seedPlanForUser(userId: number): Promise<void> {
       dayOfWeek: day.dayOfWeek,
       isRestDay: day.isRestDay,
       muscleGroups: day.muscleGroups,
+      date: getDateForWeekDay(day.week, day.dayOfWeek),
     });
 
     if (!day.isRestDay && day.exercises.length > 0) {

@@ -42,6 +42,7 @@ export interface PlanDay {
   dayOfWeek: number;
   isRestDay: boolean;
   muscleGroups: MuscleGroup[];
+  date?: string;
 }
 
 export interface Exercise {
