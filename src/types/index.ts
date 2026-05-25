@@ -66,6 +66,14 @@ export interface WorkoutLog {
   completedAt?: number;
 }
 
+export interface WorkoutTemplate {
+  id?: number;
+  userId: number;
+  name: string;
+  muscleGroups: MuscleGroup[];
+  exercises: { name: string; muscleGroup: MuscleGroup; sets: number; reps: number; restSeconds: number }[];
+}
+
 export interface AppState {
   currentUser: User | null;
   plans: Plan[];

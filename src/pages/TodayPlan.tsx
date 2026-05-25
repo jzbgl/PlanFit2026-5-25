@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, type DragEvent } from 'react';
 import { useApp } from '../context/AppContext';
-import { getPlansByUser, getPlanDayByDate, getExercisesByDay, getLogsForDate, upsertWorkoutLog, createExercise, deleteExercise, updateExercise } from '../db/database';
-import type { PlanDay, Exercise, MuscleGroup } from '../types';
+import { getPlansByUser, getPlanDayByDate, getExercisesByDay, getLogsForDate, upsertWorkoutLog, createExercise, deleteExercise, updateExercise, getTemplatesByUser, bulkCreateExercises } from '../db/database';
+import type { PlanDay, Exercise, MuscleGroup, WorkoutTemplate } from '../types';
 import { MUSCLE_GROUPS } from '../types';
 import ExerciseCard from '../components/ExerciseCard';
 import Celebration from '../components/Celebration';
+import { TemplateCards, TemplateManager } from '../components/TemplateCard';
 
 const DAY_NAMES = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
@@ -39,6 +40,8 @@ export default function TodayPlan() {
   const [newRest, setNewRest] = useState(60);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropTarget, setDropTarget] = useState<number | null>(null);
+  const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
+  const [showManager, setShowManager] = useState(false);
 
   const todayStr = getTodayStr();
 
@@ -74,6 +77,26 @@ export default function TodayPlan() {
   useEffect(() => {
     loadDay();
   }, [loadDay]);
+
+  useEffect(() => {
+    if (user?.id) getTemplatesByUser(user.id).then(setTemplates);
+  }, [user?.id]);
+
+  async function handleApplyTemplate(tmpl: WorkoutTemplate) {
+    if (!planDay) return;
+    await bulkCreateExercises(
+      tmpl.exercises.map((ex, idx) => ({
+        planDayId: planDay.id!,
+        name: ex.name,
+        muscleGroup: ex.muscleGroup,
+        sets: ex.sets,
+        reps: ex.reps,
+        restSeconds: ex.restSeconds,
+        order: exercises.length + idx + 1,
+      }))
+    );
+    loadDay();
+  }
 
   async function handleToggle(exerciseId: number, index: number) {
     const newExercises = [...exercises];
@@ -202,7 +225,16 @@ export default function TodayPlan() {
             {planDay?.isRestDay ? '今天是休息日，好好放松吧 🎉' : '今天没有安排训练，去计划概览设置吧'}
           </p>
         </div>
-      ) : exercises.length === 0 ? (
+      ) : (
+        <>
+          <TemplateCards
+            templates={templates}
+            todayMuscles={planDay.muscleGroups}
+            onSelect={handleApplyTemplate}
+            onManage={() => setShowManager(true)}
+          />
+
+          {exercises.length === 0 ? (
         <div
           className="rounded-xl p-10 text-center"
           style={{ backgroundColor: 'var(--color-card)' }}
@@ -324,6 +356,16 @@ export default function TodayPlan() {
             </div>
           )}
         </div>
+      )}
+
+        </>
+      )}
+
+      {showManager && (
+        <TemplateManager
+          onClose={() => setShowManager(false)}
+          onRefresh={() => { getTemplatesByUser(user!.id!).then(setTemplates); }}
+        />
       )}
 
       {showCelebration && (

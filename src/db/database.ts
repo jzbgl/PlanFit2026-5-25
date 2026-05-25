@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import type { User, Plan, PlanDay, Exercise, WorkoutLog } from '../types';
+import type { User, Plan, PlanDay, Exercise, WorkoutLog, WorkoutTemplate } from '../types';
 
 class PlanFitDB extends Dexie {
   users!: Table<User, number>;
@@ -7,15 +7,17 @@ class PlanFitDB extends Dexie {
   planDays!: Table<PlanDay, number>;
   exercises!: Table<Exercise, number>;
   workoutLogs!: Table<WorkoutLog, number>;
+  workoutTemplates!: Table<WorkoutTemplate, number>;
 
   constructor() {
     super('PlanFitDB');
-    this.version(3).stores({
+    this.version(4).stores({
       users: '++id, name, createdAt',
       plans: '++id, userId, createdAt',
       planDays: '++id, planId, date, [planId+week+dayOfWeek]',
       exercises: '++id, planDayId',
       workoutLogs: '++id, userId, [userId+date], [userId+exerciseId+date]',
+      workoutTemplates: '++id, userId',
     });
   }
 }
@@ -126,4 +128,22 @@ export async function upsertWorkoutLog(log: Omit<WorkoutLog, 'id'>): Promise<num
     return existing.id!;
   }
   return db.workoutLogs.add(log as WorkoutLog);
+}
+
+// --- WorkoutTemplate helpers ---
+
+export async function getTemplatesByUser(userId: number): Promise<WorkoutTemplate[]> {
+  return db.workoutTemplates.where('userId').equals(userId).toArray();
+}
+
+export async function createTemplate(tmpl: Omit<WorkoutTemplate, 'id'>): Promise<number> {
+  return db.workoutTemplates.add(tmpl as WorkoutTemplate);
+}
+
+export async function updateTemplate(id: number, changes: Partial<WorkoutTemplate>): Promise<number> {
+  return db.workoutTemplates.update(id, changes);
+}
+
+export async function deleteTemplate(id: number): Promise<void> {
+  await db.workoutTemplates.delete(id);
 }
