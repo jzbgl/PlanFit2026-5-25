@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
-import { getPlansByUser, getPlanDays, getAllLogs, deletePlan } from '../db/database';
-import type { Plan, PlanDay } from '../types';
-import CalendarGrid from '../components/CalendarGrid';
+import { getPlansByUser, getPlanDays, getAllLogs, deletePlan, db } from '../db/database';
+import type { Plan, PlanDay, Exercise } from '../types';
+import CalendarGrid, { DayEditor } from '../components/CalendarGrid';
 import CreatePlanModal from '../components/CreatePlanModal';
 
 export default function PlanOverview() {
@@ -10,13 +10,12 @@ export default function PlanOverview() {
   const user = state.currentUser;
   const [plans, setPlans] = useState<Plan[]>([]);
   const [plan, setPlan] = useState<Plan | null>(null);
-  const [week, setWeek] = useState(1);
   const [completedDayIds, setCompletedDayIds] = useState<Set<number>>(new Set());
   const [allDays, setAllDays] = useState<PlanDay[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-
-  const weeks = plan?.weeks || 4;
+  const [editingDay, setEditingDay] = useState<PlanDay | null>(null);
+  const [editingExercises, setEditingExercises] = useState<Exercise[]>([]);
 
   const loadPlan = useCallback(async (planId?: number) => {
     if (!user?.id) return;
@@ -57,6 +56,45 @@ export default function PlanOverview() {
     if (plans.length <= 1) return;
     await deletePlan(planId);
     setDropdownOpen(false);
+    loadPlan();
+  }
+
+  async function handleEditDay(day: PlanDay) {
+    const exs = await db.exercises.where('planDayId').equals(day.id!).sortBy('order');
+    setEditingExercises(exs);
+    setEditingDay(day);
+  }
+
+  async function handleSaveDay(updatedDay: PlanDay, updatedExs: Exercise[]) {
+    if (!editingDay?.id) return;
+
+    // Update the plan day
+    await db.planDays.update(editingDay.id, {
+      isRestDay: updatedDay.isRestDay,
+      muscleGroups: updatedDay.muscleGroups,
+    });
+
+    // Sync exercises: delete all existing, then re-create
+    const existingExs = await db.exercises.where('planDayId').equals(editingDay.id).toArray();
+    for (const ex of existingExs) {
+      await db.exercises.delete(ex.id!);
+    }
+
+    if (!updatedDay.isRestDay && updatedExs.length > 0) {
+      const toCreate = updatedExs.map((ex, idx) => ({
+        planDayId: editingDay.id!,
+        name: ex.name,
+        muscleGroup: ex.muscleGroup,
+        sets: ex.sets,
+        reps: ex.reps,
+        restSeconds: ex.restSeconds,
+        order: idx + 1,
+      }));
+      await db.exercises.bulkAdd(toCreate);
+    }
+
+    setEditingDay(null);
+    setEditingExercises([]);
     loadPlan();
   }
 
@@ -146,24 +184,20 @@ export default function PlanOverview() {
         </div>
       </div>
 
-      {/* Week tabs */}
-      <div className="flex gap-1 mb-4">
-        {Array.from({ length: weeks }, (_, i) => i + 1).map((w) => (
-          <button
-            key={w}
-            onClick={() => setWeek(w)}
-            className="px-4 py-1.5 rounded-md text-sm font-semibold transition-colors"
-            style={{
-              backgroundColor: week === w ? 'var(--color-primary)' : 'var(--color-card)',
-              color: week === w ? '#000' : 'var(--color-text-muted)',
-            }}
-          >
-            第{w}周
-          </button>
-        ))}
-      </div>
+      <CalendarGrid
+        days={allDays}
+        completedDayIds={completedDayIds}
+        onEditDay={handleEditDay}
+      />
 
-      <CalendarGrid days={allDays} week={week} completedDayIds={completedDayIds} />
+      {editingDay && (
+        <DayEditor
+          day={editingDay}
+          exercises={editingExercises}
+          onClose={() => { setEditingDay(null); setEditingExercises([]); }}
+          onSave={handleSaveDay}
+        />
+      )}
 
       {showCreate && (
         <CreatePlanModal
