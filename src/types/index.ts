@@ -1,10 +1,10 @@
-export type MuscleGroup = '胸' | '背' | '腿' | '肩' | '腹部' | '有氧' | '减脂';
+export type MuscleGroup = '胸' | '背' | '腿' | '肩' | '腹部' | '有氧' | '减脂' | '手臂';
 
 export type Goal = '增肌' | '减脂' | '塑形' | '力量提升';
 
 export const GOAL_OPTIONS: Goal[] = ['增肌', '减脂', '塑形', '力量提升'];
 
-export const MUSCLE_GROUPS: MuscleGroup[] = ['胸', '背', '腿', '肩', '腹部', '有氧', '减脂'];
+export const MUSCLE_GROUPS: MuscleGroup[] = ['胸', '背', '腿', '肩', '腹部', '有氧', '减脂', '手臂'];
 
 export const MUSCLE_GROUP_COLORS: Record<MuscleGroup, string> = {
   '胸': '#00E676',
@@ -14,6 +14,7 @@ export const MUSCLE_GROUP_COLORS: Record<MuscleGroup, string> = {
   '腹部': '#ef4444',
   '有氧': '#06b6d4',
   '减脂': '#ec4899',
+  '手臂': '#f97316',
 };
 
 export interface User {
