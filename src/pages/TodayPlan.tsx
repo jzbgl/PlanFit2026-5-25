@@ -42,7 +42,7 @@ export default function TodayPlan() {
     const plan = plans[0];
     if (!plan) { setLoading(false); return; }
 
-    const days = await getPlanDays(plan.id);
+    const days = await getPlanDays(plan.id!);
     const today = days.find((d) => d.week === 1 && d.dayOfWeek === dayOfWeek);
 
     if (!today || today.isRestDay) {

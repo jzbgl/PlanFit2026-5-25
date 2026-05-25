@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { getAllUsers, createUser } from '../db/database';
+import { seedPlanForUser } from '../db/seed';
 import type { User, Goal } from '../types';
 import { GOAL_OPTIONS } from '../types';
 
@@ -37,6 +38,7 @@ export default function Login() {
       goal: form.goal,
       createdAt: Date.now(),
     });
+    await seedPlanForUser(id);
     const user: User = { id, name: form.name.trim(), avatar: '💪', height: h, weight: w, goal: form.goal, createdAt: Date.now() };
     dispatch({ type: 'SET_USER', user });
     navigate('/today');

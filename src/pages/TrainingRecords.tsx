@@ -35,7 +35,7 @@ export default function TrainingRecords() {
   useEffect(() => {
     if (!user?.id) return;
     (async () => {
-      const logs = await getAllLogs(user.id);
+      const logs = await getAllLogs(user.id!);
       const completedLogs = logs.filter((l) => l.completed);
 
       const dateMap = new Map<string, Set<string>>();

@@ -23,6 +23,7 @@ export default function MyProfile() {
   if (!user) return null;
 
   async function handleSave() {
+    if (!user) return;
     const h = parseFloat(form.height);
     const w = parseFloat(form.weight);
     if (!form.name.trim() || isNaN(h) || isNaN(w)) return;
@@ -37,7 +38,7 @@ export default function MyProfile() {
 
     dispatch({
       type: 'SET_USER',
-      user: { ...user, name: form.name.trim(), height: h, weight: w, goal: form.goal, avatar },
+      user: { id: user.id, name: form.name.trim(), height: h, weight: w, goal: form.goal, avatar, createdAt: user.createdAt },
     });
     setEditing(false);
   }

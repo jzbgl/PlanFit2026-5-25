@@ -17,14 +17,14 @@ export default function PlanOverview() {
   useEffect(() => {
     if (!user?.id) return;
     (async () => {
-      const plans = await getPlansByUser(user.id);
+      const plans = await getPlansByUser(user.id!);
       if (plans.length === 0) return;
       const p = plans[0];
       setPlan(p);
       const days = await getPlanDays(p.id!);
       setAllDays(days);
 
-      const logs = await getAllLogs(user.id);
+      const logs = await getAllLogs(user.id!);
       const completedSet = new Set<number>();
       const completedMap = new Map<string, boolean>();
       for (const log of logs) {
