@@ -1,0 +1,56 @@
+{
+  "name": "推拉腿 4周计划",
+  "weeks": 4,
+  "days": [
+    {
+      "week": 1, "dayOfWeek": 1, "isRestDay": false,
+      "muscleGroups": ["胸", "手臂"],
+      "exercises": [
+        { "name": "杠铃卧推", "muscleGroup": "胸", "sets": 4, "reps": 8, "restSeconds": 90, "order": 1 },
+        { "name": "哑铃飞鸟", "muscleGroup": "胸", "sets": 3, "reps": 12, "restSeconds": 60, "order": 2 },
+        { "name": "上斜哑铃卧推", "muscleGroup": "胸", "sets": 3, "reps": 10, "restSeconds": 75, "order": 3 },
+        { "name": "绳索下压", "muscleGroup": "手臂", "sets": 3, "reps": 15, "restSeconds": 60, "order": 4 },
+        { "name": "哑铃弯举", "muscleGroup": "手臂", "sets": 3, "reps": 12, "restSeconds": 45, "order": 5 },
+        { "name": "锤式弯举", "muscleGroup": "手臂", "sets": 3, "reps": 12, "restSeconds": 45, "order": 6 }
+      ]
+    },
+    {
+      "week": 1, "dayOfWeek": 2, "isRestDay": false,
+      "muscleGroups": ["背"],
+      "exercises": [
+        { "name": "引体向上", "muscleGroup": "背", "sets": 4, "reps": 8, "restSeconds": 90, "order": 1 },
+        { "name": "杠铃划船", "muscleGroup": "背", "sets": 4, "reps": 10, "restSeconds": 90, "order": 2 },
+        { "name": "坐姿划船", "muscleGroup": "背", "sets": 3, "reps": 12, "restSeconds": 60, "order": 3 },
+        { "name": "高位下拉", "muscleGroup": "背", "sets": 3, "reps": 12, "restSeconds": 60, "order": 4 },
+        { "name": "哑铃单臂划船", "muscleGroup": "背", "sets": 3, "reps": 12, "restSeconds": 60, "order": 5 }
+      ]
+    },
+    {
+      "week": 1, "dayOfWeek": 3, "isRestDay": true,
+      "muscleGroups": [],
+      "exercises": []
+    },
+    {
+      "week": 1, "dayOfWeek": 4, "isRestDay": false,
+      "muscleGroups": ["腿", "肩"],
+      "exercises": [
+        { "name": "杠铃深蹲", "muscleGroup": "腿", "sets": 4, "reps": 8, "restSeconds": 120, "order": 1 },
+        { "name": "腿举", "muscleGroup": "腿", "sets": 3, "reps": 12, "restSeconds": 90, "order": 2 },
+        { "name": "哑铃推举", "muscleGroup": "肩", "sets": 4, "reps": 10, "restSeconds": 75, "order": 3 },
+        { "name": "侧平举", "muscleGroup": "肩", "sets": 3, "reps": 15, "restSeconds": 45, "order": 4 },
+        { "name": "面拉", "muscleGroup": "肩", "sets": 3, "reps": 15, "restSeconds": 60, "order": 5 }
+      ]
+    },
+    {
+      "week": 1, "dayOfWeek": 5, "isRestDay": false,
+      "muscleGroups": ["腹部", "有氧"],
+      "exercises": [
+        { "name": "卷腹", "muscleGroup": "腹部", "sets": 4, "reps": 20, "restSeconds": 45, "order": 1 },
+        { "name": "平板支撑", "muscleGroup": "腹部", "sets": 3, "reps": 60, "restSeconds": 60, "order": 2 },
+        { "name": "跑步", "muscleGroup": "有氧", "sets": 1, "reps": 30, "restSeconds": 0, "order": 3 }
+      ]
+    },
+    { "week": 1, "dayOfWeek": 6, "isRestDay": true, "muscleGroups": [], "exercises": [] },
+    { "week": 1, "dayOfWeek": 7, "isRestDay": true, "muscleGroups": [], "exercises": [] }
+  ]
+}
