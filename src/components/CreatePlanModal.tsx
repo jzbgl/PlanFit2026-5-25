@@ -25,7 +25,7 @@ export default function CreatePlanModal({ onClose, onCreated }: Props) {
   const [weeks, setWeeks] = useState<DayConfig[][]>(
     Array.from({ length: 4 }, () =>
       Array.from({ length: 7 }, (): DayConfig => ({
-        isRest: false,
+        isRest: true,
         muscles: [],
         exercises: [],
       }))
