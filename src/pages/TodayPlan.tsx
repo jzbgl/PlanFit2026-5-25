@@ -84,6 +84,14 @@ export default function TodayPlan() {
 
   async function handleApplyTemplate(tmpl: WorkoutTemplate) {
     if (!planDay) return;
+
+    // Delete existing exercises
+    const existing = await getExercisesByDay(planDay.id!);
+    for (const ex of existing) {
+      await deleteExercise(ex.id!);
+    }
+
+    // Add template exercises
     await bulkCreateExercises(
       tmpl.exercises.map((ex, idx) => ({
         planDayId: planDay.id!,
@@ -92,7 +100,7 @@ export default function TodayPlan() {
         sets: ex.sets,
         reps: ex.reps,
         restSeconds: ex.restSeconds,
-        order: exercises.length + idx + 1,
+        order: idx + 1,
       }))
     );
     loadDay();
