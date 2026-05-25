@@ -89,8 +89,11 @@ const MONTHS = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', 
 
 export default function CalendarGrid({ days, completedDayIds, onEditDay }: CalendarGridProps) {
   const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
+  const [viewYear, setViewYear] = useState(now.getFullYear());
+  const [viewMonth, setViewMonth] = useState(now.getMonth());
+
+  const year = viewYear;
+  const month = viewMonth;
 
   // Build date → planDay map
   const dateMap = new Map<string, PlanDay>();
@@ -121,6 +124,16 @@ export default function CalendarGrid({ days, completedDayIds, onEditDay }: Calen
   }
 
   const todayStr = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+  const isCurrentMonth = viewYear === now.getFullYear() && viewMonth === now.getMonth();
+
+  function prevMonth() {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1); }
+    else setViewMonth(viewMonth - 1);
+  }
+  function nextMonth() {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1); }
+    else setViewMonth(viewMonth + 1);
+  }
 
   function fmt(d: Date) { return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }
 
@@ -129,10 +142,12 @@ export default function CalendarGrid({ days, completedDayIds, onEditDay }: Calen
 
   return (
     <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--color-card)' }}>
-      <div className="px-4 py-3 border-b text-center" style={{ borderColor: 'var(--color-border)' }}>
+      <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--color-border)' }}>
+        <button onClick={prevMonth} className="px-2 py-1 rounded text-sm hover:bg-[var(--color-sidebar)]" style={{ color: 'var(--color-text-muted)' }}>←</button>
         <span className="text-base font-bold" style={{ color: 'var(--color-text)' }}>
           {year}年 {MONTHS[month]}
         </span>
+        <button onClick={nextMonth} className="px-2 py-1 rounded text-sm hover:bg-[var(--color-sidebar)]" style={{ color: 'var(--color-text-muted)' }}>→</button>
       </div>
 
       <div className="grid grid-cols-7 border-b" style={{ borderColor: 'var(--color-border)' }}>
