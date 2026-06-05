@@ -7,4 +7,6 @@ src-tauri/target/
 server/node_modules/
 server/uploads/
 server/*.db
+server/*.db-shm
+server/*.db-wal
 server/dist/
