@@ -31,13 +31,14 @@ export default function Teaching() {
   const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup | null>(null);
   const [content, setContent] = useState('');
   const [postMuscle, setPostMuscle] = useState<MuscleGroup>('胸');
-  const [videoUrl, setVideoUrl] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [commentTexts, setCommentTexts] = useState<Record<number, string>>({});
   const [commentsMap, setCommentsMap] = useState<Record<number, any[]>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -74,13 +75,17 @@ export default function Teaching() {
       if (selectedFile) {
         try { const up = await api.uploadImage(selectedFile); imageUrl = up.url || up.path; } catch {}
       }
-      const postContent = videoUrl.trim()
-        ? `${content.trim()}\n\n[VIDEO:${videoUrl.trim()}]`
+      let videoPath: string | undefined;
+      if (videoFile) {
+        try { const up = await api.uploadImage(videoFile); videoPath = up.url || up.path; } catch {}
+      }
+      const postContent = videoPath
+        ? `${content.trim()}\n\n[VIDEO:${videoPath}]`
         : content.trim();
       await api.createPost(auth.forumUserId, postContent, imageUrl, `教学_${postMuscle}`);
       setContent('');
-      setVideoUrl('');
       setSelectedFile(null);
+      setVideoFile(null);
       fetchPosts();
     } catch {} finally {
       setSubmitting(false);
@@ -112,28 +117,15 @@ export default function Teaching() {
   function renderContent(text: string) {
     const match = text.match(/\[VIDEO:(.*?)\]/);
     if (match) {
-      const videoUrl = match[1];
+      const videoPath = match[1];
       const cleanText = text.replace(/\[VIDEO:.*?\]/, '').trim();
-      const isYoutube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
-      const isBilibili = videoUrl.includes('bilibili.com');
       return (
         <div>
           {cleanText && <p className="text-sm whitespace-pre-wrap mb-3" style={{ color: 'var(--color-text)' }}>{cleanText}</p>}
-          <div className="rounded-xl overflow-hidden" style={{ aspectRatio: '16/9', backgroundColor: 'var(--color-bg)' }}>
-            {isYoutube || isBilibili ? (
-              <iframe
-                src={isYoutube
-                  ? `https://www.youtube.com/embed/${videoUrl.split('v=')[1]?.split('&')[0] || videoUrl.split('/').pop()}`
-                  : videoUrl.replace('www.bilibili.com/video/', 'player.bilibili.com/player.html?bvid=').split('?')[0]
-                }
-                className="w-full h-full"
-                allowFullScreen
-              />
-            ) : (
-              <video controls className="w-full h-full">
-                <source src={videoUrl} />
-              </video>
-            )}
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--color-bg)' }}>
+            <video controls className="w-full" style={{ maxHeight: '400px' }}>
+              <source src={api.getImageUrl(videoPath) || videoPath} />
+            </video>
           </div>
         </div>
       );
@@ -205,13 +197,13 @@ export default function Teaching() {
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) setSelectedFile(f); }} />
-                <input
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  placeholder="视频链接 (YouTube/Bilibili/MP4)"
-                  className="flex-1 px-3 py-1.5 rounded-lg text-xs border outline-none"
-                  style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
-                />
+                <button onClick={() => videoInputRef.current?.click()}
+                  className="px-3 py-1.5 rounded-lg text-sm"
+                  style={{ backgroundColor: videoFile ? 'var(--color-primary)' : 'var(--color-bg)', color: videoFile ? '#000' : 'var(--color-text-muted)', border: `1px solid ${videoFile ? 'var(--color-primary)' : 'var(--color-border)'}` }}>
+                  {videoFile ? `🎬 ${videoFile.name.substring(0, 12)}...` : '🎬 视频'}
+                </button>
+                <input ref={videoInputRef} type="file" accept="video/*" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) setVideoFile(f); }} />
                 <button onClick={handlePost} disabled={!content.trim() || submitting}
                   className="ml-auto px-5 py-1.5 rounded-lg text-sm font-semibold disabled:opacity-50"
                   style={{ backgroundColor: 'var(--color-primary)', color: '#000' }}>
