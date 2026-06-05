@@ -14,11 +14,11 @@ export async function getPosts() {
   return res.json();
 }
 
-export async function createPost(forumUserId: number, content: string, image?: string, category?: string) {
+export async function createPost(forumUserId: number, content: string, image?: string, category?: string, anonymous?: boolean) {
   const res = await fetch(`${BASE}/api/posts`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ forumUserId, content, image, category }),
+    body: JSON.stringify({ forumUserId, content, image, category, anonymous }),
   });
   return res.json();
 }

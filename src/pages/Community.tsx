@@ -27,6 +27,7 @@ interface Post {
   content: string;
   image?: string;
   category?: string;
+  anonymous?: number;
   createdAt: string;
   user: ForumUser;
   likesCount?: number;
@@ -52,6 +53,7 @@ export default function Community() {
   const [content, setContent] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('经验分享');
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [expandedPostId, setExpandedPostId] = useState<number | null>(null);
   const [commentsMap, setCommentsMap] = useState<Record<number, Comment[]>>({});
@@ -63,11 +65,9 @@ export default function Community() {
   useEffect(() => {
     if (!user?.id) return;
     api.forumAuth(user.id, user.name, user.avatar).then((data: { forumUserId: number }) => {
-      if (data?.forumUserId) {
-        setForumUserId(data.forumUserId);
-      }
+      if (data?.forumUserId) setForumUserId(data.forumUserId);
     }).catch(() => {});
-  }, [user?.id, user?.name, user?.avatar]);
+  }, [user?.id]);
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -103,16 +103,21 @@ export default function Community() {
     try {
       let imageUrl: string | undefined;
       if (selectedFile) {
-        const uploadRes: { url?: string; path?: string } = await api.uploadImage(selectedFile);
-        imageUrl = uploadRes.url || uploadRes.path || undefined;
+        try {
+          const uploadRes: { url?: string; path?: string } = await api.uploadImage(selectedFile);
+          imageUrl = uploadRes.url || uploadRes.path || undefined;
+        } catch {
+          // upload failed, continue without image
+        }
       }
-      await api.createPost(forumUserId, content.trim(), imageUrl, selectedCategory);
+      await api.createPost(forumUserId, content.trim(), imageUrl, selectedCategory, isAnonymous);
       setContent('');
       setSelectedFile(null);
       setSelectedCategory('经验分享');
+      setIsAnonymous(false);
       await fetchPosts();
     } catch {
-      // ignore
+      // post failed silently
     } finally {
       setSubmitting(false);
     }
@@ -277,6 +282,16 @@ export default function Community() {
             }}
           />
           <button
+            onClick={() => setIsAnonymous(!isAnonymous)}
+            className="px-3 py-1.5 rounded-lg text-sm transition-colors"
+            style={{
+              backgroundColor: isAnonymous ? 'var(--color-rest)' : 'var(--color-bg)',
+              color: isAnonymous ? '#fff' : 'var(--color-text-muted)',
+              border: `1px solid ${isAnonymous ? 'var(--color-rest)' : 'var(--color-border)'}`,
+            }}
+          >
+            {isAnonymous ? '👤 匿名' : '🕶 匿名'}
+          </button>
             className="ml-auto px-5 py-1.5 rounded-lg text-sm font-semibold transition-opacity disabled:opacity-50"
             style={{
               backgroundColor: 'var(--color-primary)',
@@ -340,15 +355,15 @@ export default function Community() {
                 <div
                   className="w-9 h-9 rounded-full flex items-center justify-center text-sm flex-shrink-0"
                   style={{
-                    background: 'linear-gradient(135deg, var(--color-primary), #00c853)',
-                    color: '#000',
+                    background: post.anonymous ? 'var(--color-sidebar)' : 'linear-gradient(135deg, var(--color-primary), #00c853)',
+                    color: post.anonymous ? 'var(--color-text-muted)' : '#000',
                   }}
                 >
-                  {post.user?.avatar || '💪'}
+                  {post.anonymous ? '?' : (post.user?.avatar || '💪')}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
-                    {post.user?.name || '匿名用户'}
+                    {post.anonymous ? '匿名用户' : (post.user?.name || '匿名用户')}
                   </div>
                   <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
                     {formatTime(post.createdAt)}

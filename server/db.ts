@@ -22,6 +22,7 @@ db.exec(`
     content TEXT NOT NULL,
     image TEXT,
     category TEXT DEFAULT '经验分享',
+    anonymous INTEGER DEFAULT 0,
     createdAt INTEGER NOT NULL,
     FOREIGN KEY (forumUserId) REFERENCES forum_users(id)
   );

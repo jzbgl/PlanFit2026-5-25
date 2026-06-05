@@ -46,9 +46,9 @@ app.get('/api/posts', (_req, res) => {
 });
 
 app.post('/api/posts', (req, res) => {
-  const { forumUserId, content, image, category } = req.body;
+  const { forumUserId, content, image, category, anonymous } = req.body;
   if (!forumUserId || !content) return res.status(400).json({ error: 'Missing fields' });
-  const result = db.prepare('INSERT INTO posts (forumUserId, content, image, category, createdAt) VALUES (?, ?, ?, ?, ?)').run(forumUserId, content, image || null, category || '经验分享', Date.now());
+  const result = db.prepare('INSERT INTO posts (forumUserId, content, image, category, anonymous, createdAt) VALUES (?, ?, ?, ?, ?, ?)').run(forumUserId, content, image || null, category || '经验分享', anonymous ? 1 : 0, Date.now());
   const post = db.prepare('SELECT p.*, u.name, u.avatar FROM posts p JOIN forum_users u ON p.forumUserId = u.id WHERE p.id = ?').get(result.lastInsertRowid);
   res.json(post);
 });
