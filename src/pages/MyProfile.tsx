@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { updateUser } from '../db/database';
-import type { Goal, Achievement } from '../types';
+import { updateUser, getBodyLogs, createBodyLog, deleteBodyLog } from '../db/database';
+import type { Goal, Achievement, BodyLog } from '../types';
 import { GOAL_OPTIONS } from '../types';
 import { checkAchievements } from '../utils/achievements';
 import * as api from '../api/community';
