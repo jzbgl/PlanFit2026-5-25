@@ -60,13 +60,21 @@ export default function Community() {
   const [commentsLoading, setCommentsLoading] = useState<Record<number, boolean>>({});
   const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
   const [commentTexts, setCommentTexts] = useState<Record<number, string>>({});
+  const [serverError, setServerError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user?.id) return;
     api.forumAuth(user.id, user.name, user.avatar).then((data: { forumUserId: number }) => {
-      if (data?.forumUserId) setForumUserId(data.forumUserId);
-    }).catch(() => {});
+      if (data?.forumUserId) {
+        setForumUserId(data.forumUserId);
+        setServerError(false);
+      } else {
+        setServerError(true);
+      }
+    }).catch(() => {
+      setServerError(true);
+    });
   }, [user?.id]);
 
   const fetchPosts = async () => {
@@ -83,6 +91,7 @@ export default function Community() {
       }
       setLikedPosts(liked);
     } catch {
+      setServerError(true);
       setPosts([]);
     } finally {
       setLoading(false);
@@ -226,6 +235,13 @@ export default function Community() {
       <h1 className="text-xl font-bold mb-5" style={{ color: 'var(--color-text)' }}>
         社区
       </h1>
+
+      {serverError && (
+        <div className="rounded-xl p-3 mb-4 text-sm text-center"
+          style={{ backgroundColor: '#3b1818', color: '#f87171', border: '1px solid #7f1d1d' }}>
+          ⚠ 无法连接到社区服务器，请确保后端已启动：<code>cd server && npm run dev</code>
+        </div>
+      )}
 
       {/* Create post card */}
       <div
