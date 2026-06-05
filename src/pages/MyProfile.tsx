@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { updateUser } from '../db/database';
-import type { Goal } from '../types';
+import { updateUser, getBodyLogs, createBodyLog, deleteBodyLog } from '../db/database';
+import type { Goal, BodyLog } from '../types';
 import { GOAL_OPTIONS } from '../types';
 import * as api from '../api/community';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const AVATAR_OPTIONS = ['💪', '🏋️', '🏃', '🧘', '🤸', '🚴', '⚡', '🔥'];
 
@@ -23,6 +24,24 @@ export default function MyProfile() {
   const [favPosts, setFavPosts] = useState<any[]>([]);
   const [likedPosts, setLikedPosts] = useState<any[]>([]);
   const [showSection, setShowSection] = useState<'favs' | 'liked' | null>(null);
+  const [showBody, setShowBody] = useState(false);
+  const [bodyLogs, setBodyLogs] = useState<BodyLog[]>([]);
+
+  function todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  }
+
+  const [bodyForm, setBodyForm] = useState({
+    date: todayStr(),
+    weight: '',
+    bodyFat: '',
+    chest: '',
+    waist: '',
+    hips: '',
+    arm: '',
+    thigh: '',
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -41,6 +60,8 @@ export default function MyProfile() {
         });
       });
     });
+
+    getBodyLogs(user.id!).then(setBodyLogs);
   }, [user]);
 
   if (!user) return null;
@@ -64,6 +85,36 @@ export default function MyProfile() {
       user: { id: user.id, name: form.name.trim(), height: h, weight: w, goal: form.goal, avatar, createdAt: user.createdAt },
     });
     setEditing(false);
+  }
+
+  async function handleAddBodyLog() {
+    if (!user) return;
+    const w = parseFloat(bodyForm.weight);
+    if (!bodyForm.date || isNaN(w)) return;
+
+    const log: Omit<BodyLog, 'id'> = {
+      userId: user.id!,
+      date: bodyForm.date,
+      weight: w,
+      bodyFat: bodyForm.bodyFat ? parseFloat(bodyForm.bodyFat) : undefined,
+      chest: bodyForm.chest ? parseFloat(bodyForm.chest) : undefined,
+      waist: bodyForm.waist ? parseFloat(bodyForm.waist) : undefined,
+      hips: bodyForm.hips ? parseFloat(bodyForm.hips) : undefined,
+      arm: bodyForm.arm ? parseFloat(bodyForm.arm) : undefined,
+      thigh: bodyForm.thigh ? parseFloat(bodyForm.thigh) : undefined,
+    };
+
+    await createBodyLog(log);
+    const updated = await getBodyLogs(user.id!);
+    setBodyLogs(updated);
+    setBodyForm({ date: todayStr(), weight: '', bodyFat: '', chest: '', waist: '', hips: '', arm: '', thigh: '' });
+  }
+
+  async function handleDeleteBodyLog(id: number) {
+    if (!user) return;
+    await deleteBodyLog(id);
+    const updated = await getBodyLogs(user.id!);
+    setBodyLogs(updated);
   }
 
   function handleLogout() {
@@ -114,13 +165,180 @@ export default function MyProfile() {
             <div className="border-t" style={{ borderColor: 'var(--color-border)' }} />
             <div className="flex justify-between items-center">
               <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>体重</span>
-              <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{user.weight} kg</span>
+              <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
+                {bodyLogs.length > 0 ? `${bodyLogs[0].weight} kg` : `${user.weight} kg`}
+              </span>
             </div>
             <div className="border-t" style={{ borderColor: 'var(--color-border)' }} />
             <div className="flex justify-between items-center">
               <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>健身目标</span>
               <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{user.goal}</span>
             </div>
+          </div>
+
+          {/* Body measurement section */}
+          <div className="mt-4">
+            <button
+              onClick={() => setShowBody(!showBody)}
+              className="w-full py-2.5 rounded-lg text-sm text-center"
+              style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-text)' }}
+            >
+              📊 身体数据 ({bodyLogs.length})
+            </button>
+
+            {showBody && (
+              <div className="mt-3 flex flex-col gap-3">
+                {/* Add form */}
+                <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-card)' }}>
+                  <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-text)' }}>记录身体数据</h3>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="date"
+                        value={bodyForm.date}
+                        onChange={(e) => setBodyForm({ ...bodyForm, date: e.target.value })}
+                        className="flex-1 px-2 py-2 rounded-lg text-xs border outline-none"
+                        style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                      />
+                      <input
+                        type="number"
+                        placeholder="体重 (kg)*"
+                        value={bodyForm.weight}
+                        onChange={(e) => setBodyForm({ ...bodyForm, weight: e.target.value })}
+                        className="flex-1 px-2 py-2 rounded-lg text-xs border outline-none"
+                        style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <input
+                        type="number"
+                        placeholder="体脂 (%)"
+                        value={bodyForm.bodyFat}
+                        onChange={(e) => setBodyForm({ ...bodyForm, bodyFat: e.target.value })}
+                        className="w-full px-2 py-2 rounded-lg text-xs border outline-none"
+                        style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                      />
+                      <input
+                        type="number"
+                        placeholder="胸围 (cm)"
+                        value={bodyForm.chest}
+                        onChange={(e) => setBodyForm({ ...bodyForm, chest: e.target.value })}
+                        className="w-full px-2 py-2 rounded-lg text-xs border outline-none"
+                        style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                      />
+                      <input
+                        type="number"
+                        placeholder="腰围 (cm)"
+                        value={bodyForm.waist}
+                        onChange={(e) => setBodyForm({ ...bodyForm, waist: e.target.value })}
+                        className="w-full px-2 py-2 rounded-lg text-xs border outline-none"
+                        style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                      />
+                      <input
+                        type="number"
+                        placeholder="臀围 (cm)"
+                        value={bodyForm.hips}
+                        onChange={(e) => setBodyForm({ ...bodyForm, hips: e.target.value })}
+                        className="w-full px-2 py-2 rounded-lg text-xs border outline-none"
+                        style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                      />
+                      <input
+                        type="number"
+                        placeholder="臂围 (cm)"
+                        value={bodyForm.arm}
+                        onChange={(e) => setBodyForm({ ...bodyForm, arm: e.target.value })}
+                        className="w-full px-2 py-2 rounded-lg text-xs border outline-none"
+                        style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                      />
+                      <input
+                        type="number"
+                        placeholder="腿围 (cm)"
+                        value={bodyForm.thigh}
+                        onChange={(e) => setBodyForm({ ...bodyForm, thigh: e.target.value })}
+                        className="w-full px-2 py-2 rounded-lg text-xs border outline-none"
+                        style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                      />
+                    </div>
+                    <button
+                      onClick={handleAddBodyLog}
+                      className="w-full py-2 rounded-lg text-xs font-semibold transition-opacity hover:opacity-90"
+                      style={{ backgroundColor: 'var(--color-primary)', color: '#000' }}
+                    >
+                      记录
+                    </button>
+                  </div>
+                </div>
+
+                {/* Weight chart */}
+                {bodyLogs.length >= 2 && (
+                  <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-card)' }}>
+                    <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-text)' }}>体重趋势</h3>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <AreaChart
+                        data={bodyLogs.slice(0, 30).reverse().map(l => ({ date: l.date, weight: l.weight }))}
+                        margin={{ top: 5, right: 10, left: -10, bottom: 5 }}
+                      >
+                        <defs>
+                          <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#00E676" stopOpacity={0.3} />
+                            <stop offset="100%" stopColor="#00E676" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#1e3a5f" />
+                        <XAxis dataKey="date" stroke="#64748b" fontSize={10} />
+                        <YAxis stroke="#64748b" fontSize={10} domain={['dataMin - 1', 'dataMax + 1']} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#0f3460',
+                            border: '1px solid #1e3a5f',
+                            borderRadius: '8px',
+                            color: '#e2e8f0',
+                            fontSize: '12px',
+                          }}
+                        />
+                        <Area type="monotone" dataKey="weight" stroke="#00E676" strokeWidth={2} fill="url(#colorWeight)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                {/* History list */}
+                {bodyLogs.length > 0 && (
+                  <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-card)' }}>
+                    <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-text)' }}>历史记录</h3>
+                    <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
+                      {bodyLogs.map((log) => (
+                        <div
+                          key={log.id}
+                          className="flex items-center justify-between p-2 rounded-lg"
+                          style={{ backgroundColor: 'var(--color-bg)' }}
+                        >
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-xs" style={{ color: 'var(--color-text)' }}>{log.date}</span>
+                            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                              体重: {log.weight}kg
+                              {log.bodyFat != null ? ` · 体脂: ${log.bodyFat}%` : ''}
+                              {log.chest != null ? ` · 胸: ${log.chest}cm` : ''}
+                              {log.waist != null ? ` · 腰: ${log.waist}cm` : ''}
+                              {log.hips != null ? ` · 臀: ${log.hips}cm` : ''}
+                              {log.arm != null ? ` · 臂: ${log.arm}cm` : ''}
+                              {log.thigh != null ? ` · 腿: ${log.thigh}cm` : ''}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => handleDeleteBodyLog(log.id!)}
+                            className="text-xs px-2 py-1 rounded transition-opacity hover:opacity-80"
+                            style={{ color: '#ef4444' }}
+                          >
+                            删除
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Favorites + Likes */}

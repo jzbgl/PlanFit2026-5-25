@@ -74,6 +74,27 @@ export interface WorkoutTemplate {
   exercises: { name: string; muscleGroup: MuscleGroup; sets: number; reps: number; restSeconds: number }[];
 }
 
+export interface BodyLog {
+  id?: number;
+  userId: number;
+  date: string;
+  weight: number;
+  bodyFat?: number;
+  chest?: number;
+  waist?: number;
+  hips?: number;
+  arm?: number;
+  thigh?: number;
+}
+
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  unlockedAt?: number;
+}
+
 export interface AppState {
   currentUser: User | null;
   plans: Plan[];

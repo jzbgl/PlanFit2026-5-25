@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import type { User, Plan, PlanDay, Exercise, WorkoutLog, WorkoutTemplate } from '../types';
+import type { User, Plan, PlanDay, Exercise, WorkoutLog, WorkoutTemplate, BodyLog } from '../types';
 
 class PlanFitDB extends Dexie {
   users!: Table<User, number>;
@@ -8,16 +8,18 @@ class PlanFitDB extends Dexie {
   exercises!: Table<Exercise, number>;
   workoutLogs!: Table<WorkoutLog, number>;
   workoutTemplates!: Table<WorkoutTemplate, number>;
+  bodyLogs!: Table<BodyLog, number>;
 
   constructor() {
     super('PlanFitDB');
-    this.version(4).stores({
+    this.version(5).stores({
       users: '++id, name, createdAt',
       plans: '++id, userId, createdAt',
       planDays: '++id, planId, date, [planId+week+dayOfWeek]',
       exercises: '++id, planDayId',
       workoutLogs: '++id, userId, [userId+date], [userId+exerciseId+date]',
       workoutTemplates: '++id, userId',
+      bodyLogs: '++id, userId, date',
     });
   }
 }
@@ -146,4 +148,19 @@ export async function updateTemplate(id: number, changes: Partial<WorkoutTemplat
 
 export async function deleteTemplate(id: number): Promise<void> {
   await db.workoutTemplates.delete(id);
+}
+
+// --- BodyLog helpers ---
+
+export async function getBodyLogs(userId: number): Promise<BodyLog[]> {
+  const logs = await db.bodyLogs.where('userId').equals(userId).toArray();
+  return logs.sort((a, b) => b.date.localeCompare(a.date));
+}
+
+export async function createBodyLog(log: Omit<BodyLog, 'id'>): Promise<number> {
+  return db.bodyLogs.add(log as BodyLog);
+}
+
+export async function deleteBodyLog(id: number): Promise<void> {
+  await db.bodyLogs.delete(id);
 }
