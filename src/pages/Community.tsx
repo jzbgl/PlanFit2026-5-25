@@ -295,12 +295,6 @@ export default function Community() {
           </div>
         </div>
       )}
-
-      {activeCategory === TEACHING_CATEGORY && !isAdmin && (
-        <div className="rounded-xl p-4 mb-4 text-sm text-center" style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-text-muted)' }}>
-          🔒 教学板块仅管理员可发布内容，当前为只读模式
-        </div>
-      )}
       {serverError && (
         <div className="rounded-xl p-3 mb-4 text-sm text-center"
           style={{ backgroundColor: '#3b1818', color: '#f87171', border: '1px solid #7f1d1d' }}>
@@ -337,7 +331,7 @@ export default function Community() {
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
           >
-            {(isAdmin ? [...CREATE_CATEGORIES, TEACHING_CATEGORY] : CREATE_CATEGORIES).map((cat) => (
+            {CREATE_CATEGORIES.map((cat) => (
               <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>

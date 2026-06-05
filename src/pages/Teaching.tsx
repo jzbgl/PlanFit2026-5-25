@@ -8,6 +8,7 @@ interface TeachingPost {
   forumUserId: number;
   content: string;
   image?: string;
+  videoUrl?: string;
   category: string;
   createdAt: string;
   name?: string;
@@ -30,6 +31,7 @@ export default function Teaching() {
   const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup | null>(null);
   const [content, setContent] = useState('');
   const [postMuscle, setPostMuscle] = useState<MuscleGroup>('胸');
+  const [videoUrl, setVideoUrl] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -72,8 +74,12 @@ export default function Teaching() {
       if (selectedFile) {
         try { const up = await api.uploadImage(selectedFile); imageUrl = up.url || up.path; } catch {}
       }
-      await api.createPost(auth.forumUserId, content.trim(), imageUrl, `教学_${postMuscle}`);
+      const postContent = videoUrl.trim()
+        ? `${content.trim()}\n\n[VIDEO:${videoUrl.trim()}]`
+        : content.trim();
+      await api.createPost(auth.forumUserId, postContent, imageUrl, `教学_${postMuscle}`);
       setContent('');
+      setVideoUrl('');
       setSelectedFile(null);
       fetchPosts();
     } catch {} finally {
@@ -101,6 +107,38 @@ export default function Teaching() {
       const comments = await api.getComments(postId);
       setCommentsMap((prev) => ({ ...prev, [postId]: comments || [] }));
     } catch {}
+  }
+
+  function renderContent(text: string) {
+    const match = text.match(/\[VIDEO:(.*?)\]/);
+    if (match) {
+      const videoUrl = match[1];
+      const cleanText = text.replace(/\[VIDEO:.*?\]/, '').trim();
+      const isYoutube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
+      const isBilibili = videoUrl.includes('bilibili.com');
+      return (
+        <div>
+          {cleanText && <p className="text-sm whitespace-pre-wrap mb-3" style={{ color: 'var(--color-text)' }}>{cleanText}</p>}
+          <div className="rounded-xl overflow-hidden" style={{ aspectRatio: '16/9', backgroundColor: 'var(--color-bg)' }}>
+            {isYoutube || isBilibili ? (
+              <iframe
+                src={isYoutube
+                  ? `https://www.youtube.com/embed/${videoUrl.split('v=')[1]?.split('&')[0] || videoUrl.split('/').pop()}`
+                  : videoUrl.replace('www.bilibili.com/video/', 'player.bilibili.com/player.html?bvid=').split('?')[0]
+                }
+                className="w-full h-full"
+                allowFullScreen
+              />
+            ) : (
+              <video controls className="w-full h-full">
+                <source src={videoUrl} />
+              </video>
+            )}
+          </div>
+        </div>
+      );
+    }
+    return <p className="text-sm whitespace-pre-wrap" style={{ color: 'var(--color-text)' }}>{text}</p>;
   }
 
   const filteredPosts = selectedMuscle
@@ -167,6 +205,13 @@ export default function Teaching() {
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) setSelectedFile(f); }} />
+                <input
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  placeholder="视频链接 (YouTube/Bilibili/MP4)"
+                  className="flex-1 px-3 py-1.5 rounded-lg text-xs border outline-none"
+                  style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                />
                 <button onClick={handlePost} disabled={!content.trim() || submitting}
                   className="ml-auto px-5 py-1.5 rounded-lg text-sm font-semibold disabled:opacity-50"
                   style={{ backgroundColor: 'var(--color-primary)', color: '#000' }}>
@@ -223,7 +268,7 @@ export default function Teaching() {
                       <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{post.name}</span>
                       <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{formatTime(post.createdAt)}</span>
                     </div>
-                    <p className="text-sm whitespace-pre-wrap" style={{ color: 'var(--color-text)' }}>{post.content}</p>
+                    {renderContent(post.content)}
 
                     <div className="flex items-center gap-4 mt-3 pt-3" style={{ borderTop: '1px solid var(--color-border)' }}>
                       <button onClick={() => handleToggleComments(post.id)}
