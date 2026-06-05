@@ -22,29 +22,16 @@ db.exec(`
     content TEXT NOT NULL,
     image TEXT,
     category TEXT DEFAULT '经验分享',
-    anonymous INTEGER DEFAULT 0,
     createdAt INTEGER NOT NULL,
-    FOREIGN KEY (forumUserId) REFERENCES forum_users(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS comments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    postId INTEGER NOT NULL,
-    forumUserId INTEGER NOT NULL,
-    content TEXT NOT NULL,
-    createdAt INTEGER NOT NULL,
-    FOREIGN KEY (postId) REFERENCES posts(id) ON DELETE CASCADE,
-    FOREIGN KEY (forumUserId) REFERENCES forum_users(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS likes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    postId INTEGER NOT NULL,
-    forumUserId INTEGER NOT NULL,
-    UNIQUE(postId, forumUserId),
-    FOREIGN KEY (postId) REFERENCES posts(id) ON DELETE CASCADE,
     FOREIGN KEY (forumUserId) REFERENCES forum_users(id)
   );
 `);
+
+// Add anonymous column if missing (safe for upgrades)
+try {
+  db.exec(`ALTER TABLE posts ADD COLUMN anonymous INTEGER DEFAULT 0`);
+} catch {
+  // column already exists, ignore
+}
 
 export default db;
