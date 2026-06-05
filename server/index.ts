@@ -46,11 +46,16 @@ app.get('/api/posts', (_req, res) => {
 });
 
 app.post('/api/posts', (req, res) => {
-  const { forumUserId, content, image, category, anonymous } = req.body;
-  if (!forumUserId || !content) return res.status(400).json({ error: 'Missing fields' });
-  const result = db.prepare('INSERT INTO posts (forumUserId, content, image, category, anonymous, createdAt) VALUES (?, ?, ?, ?, ?, ?)').run(forumUserId, content, image || null, category || '经验分享', anonymous ? 1 : 0, Date.now());
-  const post = db.prepare('SELECT p.*, u.name, u.avatar FROM posts p JOIN forum_users u ON p.forumUserId = u.id WHERE p.id = ?').get(result.lastInsertRowid);
-  res.json(post);
+  try {
+    const { forumUserId, content, image, category, anonymous } = req.body;
+    if (!forumUserId || !content) return res.status(400).json({ error: 'Missing fields' });
+    const result = db.prepare('INSERT INTO posts (forumUserId, content, image, category, anonymous, createdAt) VALUES (?, ?, ?, ?, ?, ?)').run(forumUserId, content, image || null, category || '经验分享', anonymous ? 1 : 0, Date.now());
+    const post = db.prepare('SELECT p.*, u.name, u.avatar FROM posts p JOIN forum_users u ON p.forumUserId = u.id WHERE p.id = ?').get(result.lastInsertRowid);
+    res.json(post);
+  } catch (err: any) {
+    console.error('Create post error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/upload', upload.single('image'), (req, res) => {

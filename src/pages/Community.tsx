@@ -113,20 +113,24 @@ export default function Community() {
       let imageUrl: string | undefined;
       if (selectedFile) {
         try {
-          const uploadRes: { url?: string; path?: string } = await api.uploadImage(selectedFile);
+          const uploadRes = await api.uploadImage(selectedFile);
           imageUrl = uploadRes.url || uploadRes.path || undefined;
         } catch {
           // upload failed, continue without image
         }
       }
-      await api.createPost(forumUserId, content.trim(), imageUrl, selectedCategory, isAnonymous);
+      const result = await api.createPost(forumUserId, content.trim(), imageUrl, selectedCategory, isAnonymous);
+      if (result?.error) {
+        setServerError(true);
+        return;
+      }
       setContent('');
       setSelectedFile(null);
       setSelectedCategory('经验分享');
       setIsAnonymous(false);
       await fetchPosts();
     } catch {
-      // post failed silently
+      setServerError(true);
     } finally {
       setSubmitting(false);
     }
