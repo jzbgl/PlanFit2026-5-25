@@ -4,6 +4,7 @@ import { getPlansByUser, getPlanDayByDate, getExercisesByDay, getLogsForDate, up
 import type { PlanDay, Exercise, MuscleGroup, WorkoutTemplate } from '../types';
 import { MUSCLE_GROUPS } from '../types';
 import ExerciseCard from '../components/ExerciseCard';
+import RestTimer from '../components/RestTimer';
 import Celebration from '../components/Celebration';
 import { TemplateCards, TemplateManager } from '../components/TemplateCard';
 
@@ -42,6 +43,9 @@ export default function TodayPlan() {
   const [dropTarget, setDropTarget] = useState<number | null>(null);
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
   const [showManager, setShowManager] = useState(false);
+  const [timerName, setTimerName] = useState('');
+  const [timerRest, setTimerRest] = useState(0);
+  const [showTimer, setShowTimer] = useState(false);
 
   const todayStr = getTodayStr();
 
@@ -190,6 +194,18 @@ export default function TodayPlan() {
     setDropTarget(null);
   }
 
+  function handleStartTimer(exercise: Exercise) {
+    setTimerName(exercise.name);
+    setTimerRest(exercise.restSeconds);
+    setShowTimer(true);
+  }
+
+  function handleCloseTimer() {
+    setShowTimer(false);
+    setTimerName('');
+    setTimerRest(0);
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -260,6 +276,7 @@ export default function TodayPlan() {
               completed={ex.completed}
               onToggle={() => handleToggle(ex.id!, i)}
               onDelete={() => handleDelete(i)}
+              onStartTimer={() => handleStartTimer(ex)}
               index={i}
               onDragStart={handleDragStart}
               onDragOver={handleDragOver}
@@ -382,6 +399,15 @@ export default function TodayPlan() {
           streakDays={3}
           totalSets={exercises.reduce((sum, e) => sum + e.sets, 0)}
           onClose={dismissCelebration}
+        />
+      )}
+
+      {showTimer && (
+        <RestTimer
+          exerciseName={timerName}
+          restSeconds={timerRest}
+          onComplete={() => {}}
+          onClose={handleCloseTimer}
         />
       )}
     </div>

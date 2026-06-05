@@ -7,6 +7,7 @@ interface ExerciseCardProps {
   completed: boolean;
   onToggle: () => void;
   onDelete?: () => void;
+  onStartTimer?: () => void;
   index: number;
   onDragStart: (index: number) => void;
   onDragOver: (e: DragEvent, index: number) => void;
@@ -17,7 +18,7 @@ interface ExerciseCardProps {
 }
 
 export default function ExerciseCard({
-  exercise, completed, onToggle, onDelete,
+  exercise, completed, onToggle, onDelete, onStartTimer,
   index, onDragStart, onDragOver, onDrop, onDragEnd,
   isDragging, isDropTarget,
 }: ExerciseCardProps) {
@@ -83,8 +84,17 @@ export default function ExerciseCard({
         </div>
       </div>
 
-      {/* Delete button */}
+      {/* Timer & Delete buttons */}
       <div className="flex items-center gap-1 ml-3 flex-shrink-0">
+        {onStartTimer && (
+          <button
+            onClick={onStartTimer}
+            className="w-6 h-6 rounded flex items-center justify-center text-sm transition-opacity hover:opacity-80"
+            title="休息计时"
+          >
+            ⏱
+          </button>
+        )}
         {onDelete && (
           <button
             onClick={onDelete}
