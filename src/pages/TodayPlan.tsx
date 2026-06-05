@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, type DragEvent } from 'react';
 import { useApp } from '../context/AppContext';
 import { getPlansByUser, getPlanDayByDate, getExercisesByDay, getLogsForDate, upsertWorkoutLog, createExercise, deleteExercise, updateExercise, getTemplatesByUser, bulkCreateExercises } from '../db/database';
-import type { PlanDay, Exercise, MuscleGroup, WorkoutTemplate } from '../types';
+import type { PlanDay, Exercise, MuscleGroup, WorkoutTemplate, Achievement } from '../types';
 import { MUSCLE_GROUPS } from '../types';
+import { checkAchievements } from '../utils/achievements';
 import ExerciseCard from '../components/ExerciseCard';
 import RestTimer from '../components/RestTimer';
 import Celebration from '../components/Celebration';
@@ -46,6 +47,8 @@ export default function TodayPlan() {
   const [timerName, setTimerName] = useState('');
   const [timerRest, setTimerRest] = useState(0);
   const [showTimer, setShowTimer] = useState(false);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [newAchievement, setNewAchievement] = useState<Achievement | null>(null);
 
   const todayStr = getTodayStr();
 
@@ -84,6 +87,10 @@ export default function TodayPlan() {
 
   useEffect(() => {
     if (user?.id) getTemplatesByUser(user.id).then(setTemplates);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) checkAchievements(user.id).then(setAchievements).catch(() => {});
   }, [user?.id]);
 
   async function handleApplyTemplate(tmpl: WorkoutTemplate) {
@@ -129,6 +136,16 @@ export default function TodayPlan() {
     if (allDone && !allCompleted) {
       setAllCompleted(true);
       setShowCelebration(true);
+      try {
+        const prevAchievements = JSON.parse(localStorage.getItem(`achievements_${user!.id!}`) || '{}');
+        const updated = await checkAchievements(user!.id!);
+        setAchievements(updated);
+        const justUnlocked = updated.find(a => a.unlockedAt && !prevAchievements[a.id]);
+        if (justUnlocked) {
+          setNewAchievement(justUnlocked);
+          setTimeout(() => setNewAchievement(null), 4000);
+        }
+      } catch { /* ignore achievement errors */ }
     }
   }
 
@@ -231,12 +248,22 @@ export default function TodayPlan() {
           )}
         </div>
         {total > 0 && (
-          <span
-            className="px-4 py-1.5 rounded-full text-sm font-semibold"
-            style={{ backgroundColor: 'var(--color-primary)', color: '#000' }}
-          >
-            {done}/{total}
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              className="px-4 py-1.5 rounded-full text-sm font-semibold"
+              style={{ backgroundColor: 'var(--color-primary)', color: '#000' }}
+            >
+              {done}/{total}
+            </span>
+            {achievements.filter(a => a.unlockedAt).length > 0 && (
+              <span
+                className="px-3 py-1.5 rounded-full text-sm font-semibold"
+                style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-text)' }}
+              >
+                🏅 {achievements.filter(a => a.unlockedAt).length}
+              </span>
+            )}
+          </div>
         )}
       </div>
 
@@ -400,6 +427,19 @@ export default function TodayPlan() {
           totalSets={exercises.reduce((sum, e) => sum + e.sets, 0)}
           onClose={dismissCelebration}
         />
+      )}
+
+      {newAchievement && (
+        <div
+          className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 px-5 py-3 rounded-xl flex items-center gap-3 shadow-lg animate-bounce"
+          style={{ backgroundColor: 'var(--color-primary)', color: '#000' }}
+        >
+          <span className="text-2xl">{newAchievement.icon}</span>
+          <div>
+            <div className="text-sm font-bold">成就解锁！</div>
+            <div className="text-xs opacity-80">{newAchievement.name}</div>
+          </div>
+        </div>
       )}
 
       {showTimer && (

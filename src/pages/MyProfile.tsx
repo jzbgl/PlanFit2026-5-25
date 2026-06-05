@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { updateUser, getBodyLogs, createBodyLog, deleteBodyLog } from '../db/database';
-import type { Goal, BodyLog } from '../types';
+import { updateUser } from '../db/database';
+import type { Goal, Achievement } from '../types';
 import { GOAL_OPTIONS } from '../types';
+import { checkAchievements } from '../utils/achievements';
 import * as api from '../api/community';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -24,6 +25,12 @@ export default function MyProfile() {
   const [favPosts, setFavPosts] = useState<any[]>([]);
   const [likedPosts, setLikedPosts] = useState<any[]>([]);
   const [showSection, setShowSection] = useState<'favs' | 'liked' | null>(null);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    checkAchievements(user.id!).then(setAchievements).catch(() => {});
+  }, [user]);
   const [showBody, setShowBody] = useState(false);
   const [bodyLogs, setBodyLogs] = useState<BodyLog[]>([]);
 
@@ -339,6 +346,34 @@ export default function MyProfile() {
                 )}
               </div>
             )}
+          </div>
+
+          {/* Achievements */}
+          <div className="mt-4 rounded-xl p-4" style={{ backgroundColor: 'var(--color-card)' }}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>🏅 成就</span>
+              <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                已解锁 {achievements.filter(a => a.unlockedAt).length}/{achievements.length}
+              </span>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {achievements.map(a => (
+                <div
+                  key={a.id}
+                  className="flex flex-col items-center justify-center p-2 rounded-lg text-center"
+                  style={{
+                    backgroundColor: a.unlockedAt ? 'var(--color-bg)' : 'transparent',
+                    opacity: a.unlockedAt ? 1 : 0.4,
+                    border: a.unlockedAt ? '1px solid var(--color-primary)' : '1px dashed var(--color-border)',
+                  }}
+                >
+                  <span className="text-xl mb-1">{a.unlockedAt ? a.icon : '🔒'}</span>
+                  <span className="text-xs" style={{ color: a.unlockedAt ? 'var(--color-text)' : 'var(--color-text-muted)' }}>
+                    {a.name.length > 3 ? a.name.substring(0, 3) : a.name}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Favorites + Likes */}
