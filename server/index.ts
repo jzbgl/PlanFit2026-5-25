@@ -37,8 +37,8 @@ app.post('/api/auth', (req, res) => {
 app.get('/api/posts', (_req, res) => {
   const posts = db.prepare(`
     SELECT p.*, u.name, u.avatar,
-      (SELECT COUNT(*) FROM likes WHERE postId = p.id) as likeCount,
-      (SELECT COUNT(*) FROM comments WHERE postId = p.id) as commentCount
+      (SELECT COUNT(*) FROM likes WHERE postId = p.id) as likesCount,
+      (SELECT COUNT(*) FROM comments WHERE postId = p.id) as commentsCount
     FROM posts p JOIN forum_users u ON p.forumUserId = u.id
     ORDER BY p.createdAt DESC
   `).all();
