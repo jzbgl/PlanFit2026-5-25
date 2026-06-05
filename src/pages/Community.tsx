@@ -310,7 +310,7 @@ export default function Community() {
               border: `1px solid ${isAnonymous ? 'var(--color-rest)' : 'var(--color-border)'}`,
             }}
           >
-            {isAnonymous ? '👤 匿名' : '🕶 匿名'}
+            {isAnonymous ? '🙈 匿名中' : '👤 实名发布'}
           </button>
           <button
             className="ml-auto px-5 py-1.5 rounded-lg text-sm font-semibold transition-opacity disabled:opacity-50"
