@@ -28,7 +28,6 @@ export default function Teaching() {
   const user = state.currentUser;
   const [isAdmin, setIsAdmin] = useState(false);
   const [posts, setPosts] = useState<TeachingPost[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup | null>(null);
   const [content, setContent] = useState('');
   const [postMuscle, setPostMuscle] = useState<MuscleGroup>('胸');
@@ -75,7 +74,6 @@ export default function Teaching() {
   useEffect(() => { fetchPosts(); }, []);
 
   async function fetchPosts() {
-    setLoading(true);
     try {
       const all = await api.getPosts();
       const teaching = (all || []).filter((p: any) => p.category?.startsWith('教学_'))
@@ -83,8 +81,6 @@ export default function Teaching() {
       setPosts(teaching);
     } catch {
       setPosts([]);
-    } finally {
-      setLoading(false);
     }
   }
 

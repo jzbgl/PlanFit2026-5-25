@@ -124,7 +124,6 @@ export default function CalendarGrid({ days, completedDayIds, onEditDay }: Calen
   }
 
   const todayStr = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
-  const isCurrentMonth = viewYear === now.getFullYear() && viewMonth === now.getMonth();
 
   function prevMonth() {
     if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1); }

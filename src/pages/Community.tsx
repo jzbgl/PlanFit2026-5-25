@@ -17,11 +17,6 @@ function formatTime(dateStr: string): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-interface ForumUser {
-  name: string;
-  avatar?: string;
-}
-
 interface Post {
   id: number;
   forumUserId: number;

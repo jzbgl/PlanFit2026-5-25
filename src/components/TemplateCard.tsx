@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { getTemplatesByUser, createTemplate, deleteTemplate, updateTemplate } from '../db/database';
-import type { WorkoutTemplate, MuscleGroup, Exercise } from '../types';
+import type { WorkoutTemplate, MuscleGroup } from '../types';
 import { MUSCLE_GROUPS, MUSCLE_GROUP_COLORS } from '../types';
 
 interface TemplateCardProps {

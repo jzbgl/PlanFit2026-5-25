@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
-import { getPlansByUser, getPlanDays, getAllLogs, db, getPlanDayByDate, createPlanDay } from '../db/database';
+import { getPlansByUser, getPlanDays, getAllLogs, db, createPlanDay } from '../db/database';
 import type { Plan, PlanDay } from '../types';
 import CalendarGrid, { DayEditor } from '../components/CalendarGrid';
 import WeatherPanel from '../components/WeatherPanel';
