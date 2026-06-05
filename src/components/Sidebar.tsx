@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { to: '/today', icon: '📋', label: '今日计划' },
   { to: '/overview', icon: '📅', label: '计划概览' },
   { to: '/records', icon: '📊', label: '训练记录' },
+  { to: '/community', icon: '💬', label: '社区' },
   { to: '/profile', icon: '👤', label: '我的' },
 ];
 

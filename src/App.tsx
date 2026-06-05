@@ -4,6 +4,7 @@ import TodayPlan from './pages/TodayPlan';
 import PlanOverview from './pages/PlanOverview';
 import TrainingRecords from './pages/TrainingRecords';
 import MyProfile from './pages/MyProfile';
+import Community from './pages/Community';
 import Sidebar from './components/Sidebar';
 import { useApp } from './context/AppContext';
 
@@ -16,6 +17,7 @@ function AppLayout() {
           <Route path="/today" element={<TodayPlan />} />
           <Route path="/overview" element={<PlanOverview />} />
           <Route path="/records" element={<TrainingRecords />} />
+          <Route path="/community" element={<Community />} />
           <Route path="/profile" element={<MyProfile />} />
           <Route path="*" element={<Navigate to="/today" replace />} />
         </Routes>

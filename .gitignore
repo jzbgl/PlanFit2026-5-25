@@ -4,3 +4,7 @@ dist/
 src-tauri/target/
 .DS_Store
 *.local
+server/node_modules/
+server/uploads/
+server/*.db
+server/dist/
