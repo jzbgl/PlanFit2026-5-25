@@ -145,7 +145,7 @@ export default function MyProfile() {
                 ) : (
                   favPosts.map((p: any) => (
                     <div key={p.id}
-                      onClick={() => window.open(p.category?.startsWith('教学_') ? `/teaching` : `/community`, '_self')}
+                      onClick={() => navigate(p.category?.startsWith('教学_') ? '/teaching' : '/community')}
                       className="p-2 rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
                       style={{ backgroundColor: 'var(--color-bg)' }}>
                       <div className="flex items-center gap-2 mb-1">
@@ -174,7 +174,7 @@ export default function MyProfile() {
                 ) : (
                   likedPosts.map((p: any) => (
                     <div key={p.id}
-                      onClick={() => window.open(p.category?.startsWith('教学_') ? `/teaching` : `/community`, '_self')}
+                      onClick={() => navigate(p.category?.startsWith('教学_') ? '/teaching' : '/community')}
                       className="p-2 rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
                       style={{ backgroundColor: 'var(--color-bg)' }}>
                       <div className="flex items-center gap-2 mb-1">
