@@ -29,7 +29,8 @@ interface Post {
   category?: string;
   anonymous?: number;
   createdAt: string;
-  user: ForumUser;
+  name?: string;
+  avatar?: string;
   likesCount?: number;
   commentsCount?: number;
   likedByMe?: boolean;
@@ -39,7 +40,8 @@ interface Comment {
   id: number;
   content: string;
   createdAt: string;
-  user: ForumUser;
+  name?: string;
+  avatar?: string;
 }
 
 export default function Community() {
@@ -380,11 +382,11 @@ export default function Community() {
                     color: post.anonymous ? 'var(--color-text-muted)' : '#000',
                   }}
                 >
-                  {post.anonymous ? '?' : (post.user?.avatar || '💪')}
+                  {post.anonymous ? '?' : (post.avatar || '💪')}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
-                    {post.anonymous ? '匿名用户' : (post.user?.name || '匿名用户')}
+                    {post.anonymous ? '匿名用户' : (post.name || '匿名用户')}
                   </div>
                   <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
                     {formatTime(post.createdAt)}
@@ -480,12 +482,12 @@ export default function Community() {
                               color: '#000',
                             }}
                           >
-                            {comment.user?.avatar || '💪'}
+                            {comment.avatar || '💪'}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
-                                {comment.user?.name || '匿名用户'}
+                                {comment.name || '匿名用户'}
                               </span>
                               <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
                                 {formatTime(comment.createdAt)}
