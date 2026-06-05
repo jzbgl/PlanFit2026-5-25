@@ -2,9 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import * as api from '../api/community';
 
-const CATEGORIES = ['全部', '经验分享', '身材展示', '饮食交流', '提问求助', '教学'];
+const CATEGORIES = ['全部', '经验分享', '身材展示', '饮食交流', '提问求助'];
 const CREATE_CATEGORIES = ['经验分享', '身材展示', '饮食交流', '提问求助'];
-const TEACHING_CATEGORY = '教学';
 
 function formatTime(dateStr: string): string {
   const now = Date.now();
@@ -297,6 +296,11 @@ export default function Community() {
         </div>
       )}
 
+      {activeCategory === TEACHING_CATEGORY && !isAdmin && (
+        <div className="rounded-xl p-4 mb-4 text-sm text-center" style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-text-muted)' }}>
+          🔒 教学板块仅管理员可发布内容，当前为只读模式
+        </div>
+      )}
       {serverError && (
         <div className="rounded-xl p-3 mb-4 text-sm text-center"
           style={{ backgroundColor: '#3b1818', color: '#f87171', border: '1px solid #7f1d1d' }}>
@@ -304,8 +308,7 @@ export default function Community() {
         </div>
       )}
 
-      {/* Create post card - hidden for teaching tab if not admin */}
-      {(activeCategory !== TEACHING_CATEGORY || isAdmin) && (
+      {/* Create post card */}
       <div
         className="rounded-2xl p-4 mb-5"
         style={{ backgroundColor: 'var(--color-card)' }}
@@ -383,7 +386,6 @@ export default function Community() {
           </button>
         </div>
       </div>
-      )}
 
       {/* Category tabs */}
       <div className="flex gap-2 mb-5 overflow-x-auto">
@@ -397,16 +399,10 @@ export default function Community() {
             }}
             onClick={() => setActiveCategory(cat)}
           >
-            {cat === TEACHING_CATEGORY ? '🎓 ' : ''}{cat}
+            {cat}
           </button>
         ))}
       </div>
-
-      {activeCategory === TEACHING_CATEGORY && !isAdmin && (
-        <div className="rounded-xl p-4 mb-4 text-sm text-center" style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-text-muted)' }}>
-          🔒 教学板块仅管理员可发布内容，当前为只读模式
-        </div>
-      )}
 
       {/* Posts list */}
       {loading ? (
