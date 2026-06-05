@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import * as api from '../api/community';
 import { MUSCLE_GROUPS, MUSCLE_GROUP_COLORS, type MuscleGroup } from '../types';
@@ -39,8 +40,26 @@ export default function Teaching() {
   const [commentsMap, setCommentsMap] = useState<Record<number, any[]>>({});
   const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set());
   const [forumId, setForumId] = useState<number | null>(null);
+  const [highlightedId, setHighlightedId] = useState<number | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const postRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const h = searchParams.get('highlight');
+    if (h) {
+      const id = Number(h);
+      setSelectedMuscle(null);
+      setHighlightedId(id);
+      setTimeout(() => {
+        postRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 500);
+      setTimeout(() => setHighlightedId(null), 3000);
+      searchParams.delete('highlight');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, []);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -268,7 +287,10 @@ export default function Teaching() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredPosts.map((post) => (
-                <div key={post.id} className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--color-card)' }}>
+                <div key={post.id}
+                  ref={(el) => { postRefs.current[post.id] = el; }}
+                  className="rounded-2xl overflow-hidden transition-colors duration-[2s]"
+                  style={{ backgroundColor: highlightedId === post.id ? '#1a3a2e' : 'var(--color-card)' }}>
                   {post.image && (
                     <img src={api.getImageUrl(post.image) || ''} alt="" className="w-full h-48 object-cover" />
                   )}

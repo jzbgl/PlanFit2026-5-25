@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import * as api from '../api/community';
 
@@ -62,11 +63,29 @@ export default function Community() {
   const [commentsLoading, setCommentsLoading] = useState<Record<number, boolean>>({});
   const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
   const [commentTexts, setCommentTexts] = useState<Record<number, string>>({});
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle highlight from URL
+  useEffect(() => {
+    const h = searchParams.get('highlight');
+    if (h) {
+      const id = Number(h);
+      setHighlightedId(id);
+      setTimeout(() => {
+        postRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 500);
+      setTimeout(() => setHighlightedId(null), 3000);
+      searchParams.delete('highlight');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, []);
   const [serverError, setServerError] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdminDialog, setShowAdminDialog] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
+  const [highlightedId, setHighlightedId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const postRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   useEffect(() => {
     if (!user?.id) return;
@@ -422,8 +441,12 @@ export default function Community() {
           {filteredPosts.map((post) => (
             <div
               key={post.id}
+              ref={(el) => { postRefs.current[post.id] = el; }}
               className="rounded-2xl p-4 cursor-pointer transition-colors"
-              style={{ backgroundColor: 'var(--color-card)' }}
+              style={{
+                backgroundColor: highlightedId === post.id ? 'var(--color-primary)' : 'var(--color-card)',
+                transition: 'background-color 2s ease',
+              }}
               onClick={() => handleToggleComments(post.id)}
             >
               {/* Header: avatar, name, time, category */}
