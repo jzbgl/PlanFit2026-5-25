@@ -139,13 +139,28 @@ export default function MyProfile() {
             </div>
 
             {showSection === 'favs' && (
-              <div className="rounded-xl p-3 flex flex-col gap-2 max-h-64 overflow-y-auto" style={{ backgroundColor: 'var(--color-card)' }}>
+              <div className="rounded-xl p-3 flex flex-col gap-2 max-h-80 overflow-y-auto" style={{ backgroundColor: 'var(--color-card)' }}>
                 {favPosts.length === 0 ? (
                   <p className="text-xs text-center py-4" style={{ color: 'var(--color-text-muted)' }}>暂无收藏</p>
                 ) : (
                   favPosts.map((p: any) => (
-                    <div key={p.id} className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                      <span style={{ color: 'var(--color-text)' }}>{p.name}</span>: {p.content?.substring(0, 40)}...
+                    <div key={p.id}
+                      onClick={() => window.open(p.category?.startsWith('教学_') ? `/teaching` : `/community`, '_self')}
+                      className="p-2 rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                      style={{ backgroundColor: 'var(--color-bg)' }}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs"
+                          style={{ background: 'linear-gradient(135deg, var(--color-primary), #00c853)', color: '#000' }}>
+                          {p.avatar || '💪'}
+                        </div>
+                        <span className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>{p.name || '匿名'}</span>
+                        <span className="text-xs px-1.5 py-0.5 rounded" style={{ color: 'var(--color-primary)', backgroundColor: 'var(--color-sidebar)' }}>
+                          {p.category?.replace('教学_', '教学·') || '社区'}
+                        </span>
+                      </div>
+                      <p className="text-xs line-clamp-2" style={{ color: 'var(--color-text-muted)' }}>
+                        {p.content?.replace(/\[VIDEO:.*?\]/, '[视频]').substring(0, 80)}
+                      </p>
                     </div>
                   ))
                 )}
@@ -153,13 +168,28 @@ export default function MyProfile() {
             )}
 
             {showSection === 'liked' && (
-              <div className="rounded-xl p-3 flex flex-col gap-2 max-h-64 overflow-y-auto" style={{ backgroundColor: 'var(--color-card)' }}>
+              <div className="rounded-xl p-3 flex flex-col gap-2 max-h-80 overflow-y-auto" style={{ backgroundColor: 'var(--color-card)' }}>
                 {likedPosts.length === 0 ? (
                   <p className="text-xs text-center py-4" style={{ color: 'var(--color-text-muted)' }}>暂无点赞</p>
                 ) : (
                   likedPosts.map((p: any) => (
-                    <div key={p.id} className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                      <span style={{ color: 'var(--color-text)' }}>{p.name}</span>: {p.content?.substring(0, 40)}...
+                    <div key={p.id}
+                      onClick={() => window.open(p.category?.startsWith('教学_') ? `/teaching` : `/community`, '_self')}
+                      className="p-2 rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                      style={{ backgroundColor: 'var(--color-bg)' }}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs"
+                          style={{ background: 'linear-gradient(135deg, var(--color-primary), #00c853)', color: '#000' }}>
+                          {p.avatar || '💪'}
+                        </div>
+                        <span className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>{p.name || '匿名'}</span>
+                        <span className="text-xs px-1.5 py-0.5 rounded" style={{ color: 'var(--color-primary)', backgroundColor: 'var(--color-sidebar)' }}>
+                          {p.category?.replace('教学_', '教学·') || '社区'}
+                        </span>
+                      </div>
+                      <p className="text-xs line-clamp-2" style={{ color: 'var(--color-text-muted)' }}>
+                        {p.content?.replace(/\[VIDEO:.*?\]/, '[视频]').substring(0, 80)}
+                      </p>
                     </div>
                   ))
                 )}
