@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { updateUser } from '../db/database';
 import type { Goal } from '../types';
 import { GOAL_OPTIONS } from '../types';
+import * as api from '../api/community';
 
 const AVATAR_OPTIONS = ['💪', '🏋️', '🏃', '🧘', '🤸', '🚴', '⚡', '🔥'];
 
@@ -19,6 +20,28 @@ export default function MyProfile() {
     goal: (user?.goal || '增肌') as Goal,
   });
   const [avatar, setAvatar] = useState(user?.avatar || '💪');
+  const [favPosts, setFavPosts] = useState<any[]>([]);
+  const [likedPosts, setLikedPosts] = useState<any[]>([]);
+  const [showSection, setShowSection] = useState<'favs' | 'liked' | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    api.forumAuth(user.id!, user.name, user.avatar).then((auth: any) => {
+      if (!auth?.forumUserId) return;
+      api.getFavorites(auth.forumUserId).then((ids: number[]) => {
+        if (!ids?.length) return;
+        api.getPosts().then((posts: any[]) => {
+          setFavPosts(posts.filter((p: any) => ids.includes(p.id)));
+        });
+      });
+      api.getUserLiked(auth.forumUserId).then((ids: number[]) => {
+        if (!ids?.length) return;
+        api.getPosts().then((posts: any[]) => {
+          setLikedPosts(posts.filter((p: any) => ids.includes(p.id)));
+        });
+      });
+    });
+  }, [user]);
 
   if (!user) return null;
 
@@ -98,6 +121,50 @@ export default function MyProfile() {
               <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>健身目标</span>
               <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{user.goal}</span>
             </div>
+          </div>
+
+          {/* Favorites + Likes */}
+          <div className="mt-4 flex flex-col gap-2">
+            <div className="flex gap-2">
+              <button onClick={() => setShowSection(showSection === 'favs' ? null : 'favs')}
+                className="flex-1 py-2.5 rounded-lg text-sm text-center"
+                style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-text)' }}>
+                ⭐ 收藏 ({favPosts.length})
+              </button>
+              <button onClick={() => setShowSection(showSection === 'liked' ? null : 'liked')}
+                className="flex-1 py-2.5 rounded-lg text-sm text-center"
+                style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-text)' }}>
+                ❤️ 点赞 ({likedPosts.length})
+              </button>
+            </div>
+
+            {showSection === 'favs' && (
+              <div className="rounded-xl p-3 flex flex-col gap-2 max-h-64 overflow-y-auto" style={{ backgroundColor: 'var(--color-card)' }}>
+                {favPosts.length === 0 ? (
+                  <p className="text-xs text-center py-4" style={{ color: 'var(--color-text-muted)' }}>暂无收藏</p>
+                ) : (
+                  favPosts.map((p: any) => (
+                    <div key={p.id} className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                      <span style={{ color: 'var(--color-text)' }}>{p.name}</span>: {p.content?.substring(0, 40)}...
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {showSection === 'liked' && (
+              <div className="rounded-xl p-3 flex flex-col gap-2 max-h-64 overflow-y-auto" style={{ backgroundColor: 'var(--color-card)' }}>
+                {likedPosts.length === 0 ? (
+                  <p className="text-xs text-center py-4" style={{ color: 'var(--color-text-muted)' }}>暂无点赞</p>
+                ) : (
+                  likedPosts.map((p: any) => (
+                    <div key={p.id} className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                      <span style={{ color: 'var(--color-text)' }}>{p.name}</span>: {p.content?.substring(0, 40)}...
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
 
           {/* Switch user */}

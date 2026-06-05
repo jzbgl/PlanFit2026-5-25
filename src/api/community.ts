@@ -95,6 +95,11 @@ export async function getFavorites(forumUserId: number) {
   return res.json();
 }
 
+export async function getUserLiked(forumUserId: number) {
+  const res = await fetch(`${BASE}/api/user-liked/${forumUserId}`);
+  return res.json();
+}
+
 export function getImageUrl(path: string) {
   if (!path) return null;
   return `${BASE}${path}`;

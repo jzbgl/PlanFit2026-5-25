@@ -137,6 +137,11 @@ app.get('/api/favorites/:forumUserId', (req, res) => {
   res.json(favs.map((f: any) => f.postId));
 });
 
+app.get('/api/user-liked/:forumUserId', (req, res) => {
+  const likes = db.prepare('SELECT postId FROM likes WHERE forumUserId = ?').all(Number(req.params.forumUserId)) as any[];
+  res.json(likes.map((l: any) => l.postId));
+});
+
 app.listen(PORT, () => {
   console.log(`Forum server running on http://localhost:${PORT}`);
 });
