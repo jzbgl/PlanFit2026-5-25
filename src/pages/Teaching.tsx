@@ -37,6 +37,8 @@ export default function Teaching() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [commentTexts, setCommentTexts] = useState<Record<number, string>>({});
   const [commentsMap, setCommentsMap] = useState<Record<number, any[]>>({});
+  const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set());
+  const [forumId, setForumId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
@@ -44,7 +46,9 @@ export default function Teaching() {
     if (!user?.id) return;
     api.forumAuth(user.id, user.name, user.avatar).then((data: { forumUserId: number }) => {
       if (data?.forumUserId) {
+        setForumId(data.forumUserId);
         api.adminCheck(data.forumUserId).then((r: { isAdmin: boolean }) => setIsAdmin(r.isAdmin));
+        api.getFavorites(data.forumUserId).then((ids: number[]) => setFavoriteIds(new Set(ids || [])));
       }
     });
   }, [user?.id]);
@@ -111,6 +115,23 @@ export default function Teaching() {
       setCommentTexts((prev) => ({ ...prev, [postId]: '' }));
       const comments = await api.getComments(postId);
       setCommentsMap((prev) => ({ ...prev, [postId]: comments || [] }));
+    } catch {}
+  }
+
+  async function handleDeletePost(postId: number) {
+    if (!forumId) return;
+    try { await api.deletePost(postId, forumId); fetchPosts(); } catch {}
+  }
+
+  async function handleToggleFav(postId: number) {
+    if (!forumId) return;
+    try {
+      const res = await api.toggleFavorite(forumId, postId);
+      setFavoriteIds((prev) => {
+        const next = new Set(prev);
+        res.favorited ? next.add(postId) : next.delete(postId);
+        return next;
+      });
     } catch {}
   }
 
@@ -267,6 +288,16 @@ export default function Teaching() {
                         className="text-xs flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
                         💬 {post.commentsCount || 0} 评论
                       </button>
+                      <button onClick={() => handleToggleFav(post.id)}
+                        className="text-xs flex items-center gap-1" style={{ color: favoriteIds.has(post.id) ? '#f59e0b' : 'var(--color-text-muted)' }}>
+                        {favoriteIds.has(post.id) ? '⭐' : '☆'} 收藏
+                      </button>
+                      {isAdmin && (
+                        <button onClick={() => handleDeletePost(post.id)}
+                          className="ml-auto text-xs" style={{ color: '#ef4444' }}>
+                          🗑 删除
+                        </button>
+                      )}
                     </div>
 
                     {expandedId === post.id && (

@@ -81,6 +81,20 @@ export async function adminCheck(forumUserId: number) {
   return res.json();
 }
 
+export async function toggleFavorite(forumUserId: number, postId: number) {
+  const res = await fetch(`${BASE}/api/favorites/toggle`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ forumUserId, postId }),
+  });
+  return res.json();
+}
+
+export async function getFavorites(forumUserId: number) {
+  const res = await fetch(`${BASE}/api/favorites/${forumUserId}`);
+  return res.json();
+}
+
 export function getImageUrl(path: string) {
   if (!path) return null;
   return `${BASE}${path}`;

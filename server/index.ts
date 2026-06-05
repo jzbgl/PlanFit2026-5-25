@@ -24,18 +24,16 @@ const upload = multer({ storage, limits: { fileSize: 100 * 1024 * 1024 } });
 app.post('/api/auth', (req, res) => {
   const { localUserId, name, avatar } = req.body;
   if (!localUserId || !name) return res.status(400).json({ error: 'Missing fields' });
-
   let user = db.prepare('SELECT * FROM forum_users WHERE localUserId = ?').get(localUserId) as any;
   if (!user) {
-    const result = db.prepare('INSERT INTO forum_users (localUserId, name, avatar, createdAt) VALUES (?, ?, ?, ?)').run(localUserId, name, avatar || '💪', Date.now());
-    user = db.prepare('SELECT * FROM forum_users WHERE id = ?').get(result.lastInsertRowid) as any;
+    db.prepare('INSERT INTO forum_users (localUserId, name, avatar, createdAt) VALUES (?, ?, ?, ?)').run(localUserId, name, avatar || '💪', Date.now());
+    user = db.prepare('SELECT * FROM forum_users WHERE localUserId = ?').get(localUserId) as any;
   }
   res.json({ forumUserId: user.id, name: user.name, avatar: user.avatar });
 });
 
-// --- Admin auth ---
+// --- Admin ---
 const ADMIN_PASSWORD = 'planfit2026';
-
 app.post('/api/admin-auth', (req, res) => {
   const { forumUserId, password } = req.body;
   if (!forumUserId || !password) return res.status(400).json({ error: 'Missing fields' });
@@ -46,7 +44,6 @@ app.post('/api/admin-auth', (req, res) => {
     res.status(403).json({ error: '密码错误' });
   }
 });
-
 app.get('/api/admin-check/:forumUserId', (req, res) => {
   const user = db.prepare('SELECT isAdmin FROM forum_users WHERE id = ?').get(Number(req.params.forumUserId)) as any;
   res.json({ isAdmin: user?.isAdmin === 1 });
@@ -87,21 +84,17 @@ app.delete('/api/posts/:id', (req, res) => {
   const { forumUserId } = req.body;
   const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(id) as any;
   if (!post) return res.status(404).json({ error: 'Not found' });
-  if (post.forumUserId !== forumUserId) return res.status(403).json({ error: 'Forbidden' });
+  const user = db.prepare('SELECT isAdmin FROM forum_users WHERE id = ?').get(forumUserId) as any;
+  if (post.forumUserId !== forumUserId && user?.isAdmin !== 1) return res.status(403).json({ error: 'Forbidden' });
   db.prepare('DELETE FROM posts WHERE id = ?').run(id);
   res.json({ success: true });
 });
 
 // --- Comments ---
 app.get('/api/posts/:id/comments', (req, res) => {
-  const comments = db.prepare(`
-    SELECT c.*, u.name, u.avatar FROM comments c
-    JOIN forum_users u ON c.forumUserId = u.id
-    WHERE c.postId = ? ORDER BY c.createdAt ASC
-  `).all(req.params.id);
+  const comments = db.prepare('SELECT c.*, u.name, u.avatar FROM comments c JOIN forum_users u ON c.forumUserId = u.id WHERE c.postId = ? ORDER BY c.createdAt ASC').all(req.params.id);
   res.json(comments);
 });
-
 app.post('/api/posts/:id/comments', (req, res) => {
   const { forumUserId, content } = req.body;
   if (!forumUserId || !content) return res.status(400).json({ error: 'Missing fields' });
@@ -113,7 +106,6 @@ app.post('/api/posts/:id/comments', (req, res) => {
 // --- Likes ---
 app.post('/api/posts/:id/like', (req, res) => {
   const { forumUserId } = req.body;
-  if (!forumUserId) return res.status(400).json({ error: 'Missing userId' });
   const existing = db.prepare('SELECT * FROM likes WHERE postId = ? AND forumUserId = ?').get(Number(req.params.id), forumUserId) as any;
   if (existing) {
     db.prepare('DELETE FROM likes WHERE postId = ? AND forumUserId = ?').run(Number(req.params.id), forumUserId);
@@ -123,10 +115,26 @@ app.post('/api/posts/:id/like', (req, res) => {
   const count = (db.prepare('SELECT COUNT(*) as c FROM likes WHERE postId = ?').get(Number(req.params.id)) as any).c;
   res.json({ liked: !existing, likeCount: count });
 });
-
 app.get('/api/posts/:id/likes', (req, res) => {
   const likes = db.prepare('SELECT forumUserId FROM likes WHERE postId = ?').all(Number(req.params.id)) as any[];
   res.json(likes.map((l: any) => l.forumUserId));
+});
+
+// --- Favorites ---
+app.post('/api/favorites/toggle', (req, res) => {
+  const { forumUserId, postId } = req.body;
+  const existing = db.prepare('SELECT * FROM favorites WHERE postId = ? AND forumUserId = ?').get(postId, forumUserId) as any;
+  if (existing) {
+    db.prepare('DELETE FROM favorites WHERE postId = ? AND forumUserId = ?').run(postId, forumUserId);
+    res.json({ favorited: false });
+  } else {
+    db.prepare('INSERT INTO favorites (postId, forumUserId, createdAt) VALUES (?, ?, ?)').run(postId, forumUserId, Date.now());
+    res.json({ favorited: true });
+  }
+});
+app.get('/api/favorites/:forumUserId', (req, res) => {
+  const favs = db.prepare('SELECT postId FROM favorites WHERE forumUserId = ?').all(Number(req.params.forumUserId)) as any[];
+  res.json(favs.map((f: any) => f.postId));
 });
 
 app.listen(PORT, () => {
