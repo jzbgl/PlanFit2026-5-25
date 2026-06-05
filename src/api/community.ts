@@ -67,6 +67,20 @@ export async function getLikes(postId: number) {
   return res.json();
 }
 
+export async function adminAuth(forumUserId: number, password: string) {
+  const res = await fetch(`${BASE}/api/admin-auth`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ forumUserId, password }),
+  });
+  return res.json();
+}
+
+export async function adminCheck(forumUserId: number) {
+  const res = await fetch(`${BASE}/api/admin-check/${forumUserId}`);
+  return res.json();
+}
+
 export function getImageUrl(path: string) {
   if (!path) return null;
   return `${BASE}${path}`;

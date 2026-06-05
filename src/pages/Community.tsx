@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import * as api from '../api/community';
 
-const CATEGORIES = ['全部', '经验分享', '身材展示', '饮食交流', '提问求助'];
+const CATEGORIES = ['全部', '经验分享', '身材展示', '饮食交流', '提问求助', '教学'];
 const CREATE_CATEGORIES = ['经验分享', '身材展示', '饮食交流', '提问求助'];
+const TEACHING_CATEGORY = '教学';
 
 function formatTime(dateStr: string): string {
   const now = Date.now();
@@ -63,6 +64,9 @@ export default function Community() {
   const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
   const [commentTexts, setCommentTexts] = useState<Record<number, string>>({});
   const [serverError, setServerError] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showAdminDialog, setShowAdminDialog] = useState(false);
+  const [adminPassword, setAdminPassword] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -71,6 +75,7 @@ export default function Community() {
       if (data?.forumUserId) {
         setForumUserId(data.forumUserId);
         setServerError(false);
+        api.adminCheck(data.forumUserId).then((r: { isAdmin: boolean }) => setIsAdmin(r.isAdmin));
       } else {
         setServerError(true);
       }
@@ -137,6 +142,18 @@ export default function Community() {
       setSubmitting(false);
     }
   };
+
+  async function handleAdminAuth() {
+    if (!forumUserId || !adminPassword) return;
+    const res = await api.adminAuth(forumUserId, adminPassword);
+    if (res?.success) {
+      setIsAdmin(true);
+      setShowAdminDialog(false);
+      setAdminPassword('');
+    } else {
+      alert('密码错误');
+    }
+  }
 
   const handleDeletePost = async (postId: number) => {
     if (!forumUserId) return;
@@ -238,9 +255,47 @@ export default function Community() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <h1 className="text-xl font-bold mb-5" style={{ color: 'var(--color-text)' }}>
+      <h1 className="text-xl font-bold mb-5 flex items-center gap-3" style={{ color: 'var(--color-text)' }}>
         社区
+        {!isAdmin && (
+          <button onClick={() => setShowAdminDialog(true)} className="text-xs px-2 py-0.5 rounded"
+            style={{ color: 'var(--color-text-muted)', border: '1px solid var(--color-border)' }}>
+            🔑 管理员
+          </button>
+        )}
+        {isAdmin && (
+          <span className="text-xs px-2 py-0.5 rounded" style={{ color: 'var(--color-primary)', border: '1px solid var(--color-primary)' }}>
+            👑 管理员
+          </span>
+        )}
       </h1>
+
+      {showAdminDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(10,22,40,0.95)' }}>
+          <div className="rounded-2xl p-6 max-w-sm w-full mx-4" style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
+            <h3 className="text-base font-bold mb-3" style={{ color: 'var(--color-text)' }}>管理员认证</h3>
+            <input
+              type="password"
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAdminAuth()}
+              className="w-full px-3 py-2 rounded-lg text-sm border outline-none mb-3"
+              style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+              placeholder="请输入管理员密码"
+            />
+            <div className="flex gap-2">
+              <button onClick={() => { setShowAdminDialog(false); setAdminPassword(''); }}
+                className="flex-1 py-2 rounded-lg text-sm" style={{ border: '1px solid var(--color-border)', color: 'var(--color-text-muted)' }}>
+                取消
+              </button>
+              <button onClick={handleAdminAuth} className="flex-1 py-2 rounded-lg text-sm font-semibold"
+                style={{ backgroundColor: 'var(--color-primary)', color: '#000' }}>
+                认证
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {serverError && (
         <div className="rounded-xl p-3 mb-4 text-sm text-center"
@@ -249,7 +304,8 @@ export default function Community() {
         </div>
       )}
 
-      {/* Create post card */}
+      {/* Create post card - hidden for teaching tab if not admin */}
+      {(activeCategory !== TEACHING_CATEGORY || isAdmin) && (
       <div
         className="rounded-2xl p-4 mb-5"
         style={{ backgroundColor: 'var(--color-card)' }}
@@ -278,7 +334,7 @@ export default function Community() {
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
           >
-            {CREATE_CATEGORIES.map((cat) => (
+            {(isAdmin ? [...CREATE_CATEGORIES, TEACHING_CATEGORY] : CREATE_CATEGORIES).map((cat) => (
               <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
@@ -327,6 +383,7 @@ export default function Community() {
           </button>
         </div>
       </div>
+      )}
 
       {/* Category tabs */}
       <div className="flex gap-2 mb-5 overflow-x-auto">
@@ -340,10 +397,16 @@ export default function Community() {
             }}
             onClick={() => setActiveCategory(cat)}
           >
-            {cat}
+            {cat === TEACHING_CATEGORY ? '🎓 ' : ''}{cat}
           </button>
         ))}
       </div>
+
+      {activeCategory === TEACHING_CATEGORY && !isAdmin && (
+        <div className="rounded-xl p-4 mb-4 text-sm text-center" style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-text-muted)' }}>
+          🔒 教学板块仅管理员可发布内容，当前为只读模式
+        </div>
+      )}
 
       {/* Posts list */}
       {loading ? (

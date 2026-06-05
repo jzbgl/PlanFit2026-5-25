@@ -33,6 +33,25 @@ app.post('/api/auth', (req, res) => {
   res.json({ forumUserId: user.id, name: user.name, avatar: user.avatar });
 });
 
+// --- Admin auth ---
+const ADMIN_PASSWORD = 'planfit2026';
+
+app.post('/api/admin-auth', (req, res) => {
+  const { forumUserId, password } = req.body;
+  if (!forumUserId || !password) return res.status(400).json({ error: 'Missing fields' });
+  if (password === ADMIN_PASSWORD) {
+    db.prepare('UPDATE forum_users SET isAdmin = 1 WHERE id = ?').run(forumUserId);
+    res.json({ success: true });
+  } else {
+    res.status(403).json({ error: '密码错误' });
+  }
+});
+
+app.get('/api/admin-check/:forumUserId', (req, res) => {
+  const user = db.prepare('SELECT isAdmin FROM forum_users WHERE id = ?').get(Number(req.params.forumUserId)) as any;
+  res.json({ isAdmin: user?.isAdmin === 1 });
+});
+
 // --- Posts ---
 app.get('/api/posts', (_req, res) => {
   const posts = db.prepare(`

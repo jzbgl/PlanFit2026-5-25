@@ -13,6 +13,7 @@ db.exec(`
     localUserId INTEGER NOT NULL,
     name TEXT NOT NULL,
     avatar TEXT DEFAULT '💪',
+    isAdmin INTEGER DEFAULT 0,
     createdAt INTEGER NOT NULL
   );
 
@@ -30,6 +31,13 @@ db.exec(`
 // Add anonymous column if missing (safe for upgrades)
 try {
   db.exec(`ALTER TABLE posts ADD COLUMN anonymous INTEGER DEFAULT 0`);
+} catch {
+  // column already exists, ignore
+}
+
+// Add isAdmin column if missing
+try {
+  db.exec(`ALTER TABLE forum_users ADD COLUMN isAdmin INTEGER DEFAULT 0`);
 } catch {
   // column already exists, ignore
 }
