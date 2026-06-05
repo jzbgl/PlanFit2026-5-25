@@ -292,6 +292,7 @@ export default function Community() {
           >
             {isAnonymous ? '👤 匿名' : '🕶 匿名'}
           </button>
+          <button
             className="ml-auto px-5 py-1.5 rounded-lg text-sm font-semibold transition-opacity disabled:opacity-50"
             style={{
               backgroundColor: 'var(--color-primary)',
